@@ -13,7 +13,7 @@
 ## Aşama 1 — Yükleme ve PDF analizi
 
 - [x] Modül yapısı (`js/01_ortak.js` … `js/04_kapsam.js`, `tests/run.js`); toptan kopyalama yerine küçük modüller (bkz. PLAN.md)
-- [ ] `index.html` ve arayüz iskeleti
+- [x] `index.html` ve arayüz iskeleti (PDF + arşiv yükleme, özet, dönemler, faturalar, kapsam)
 - [ ] Toplu yükleme ve belge türü tanıma
 - [x] e-Karşıt PDF analizi (A, B, C, Ç, birden fazla sözleşme, fatura tablosu, TOPLAM kontrolü)
 - [x] Dönem kapsamı (fatura ayı, önceki ay, yıl)
@@ -22,7 +22,7 @@
 
 - [x] Arşiv okuma (karışık sayı biçimleri normalize) ve VKN eşleşme kontrolü
 - [x] Tablo bazında arşiv/eksik durumu (komut satırı)
-- [ ] Eksik paneli (arayüz)
+- [x] Eksik paneli (arayüz; yalnızca gösterim, belge yükleme Aşama 3)
 
 ## Aşama 3 — Belgelerden tamamlama
 

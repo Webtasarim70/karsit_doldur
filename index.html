@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karşıt Doldur</title><link rel="stylesheet" href="css/stil.css"></head>
+<body>
+<header><h1>Karşıt Doldur</h1><span>e-Karşıt PDF + arşiv → e-Karşıt Excel dosyaları · dosyalar tarayıcıdan çıkmaz</span></header>
+<main>
+<section><h2>1. Dosyaları yükleyin</h2>
+<div class="up">
+<label class="drop" id="dPdf"><b>e-Karşıt tutanak PDF’i</b>Sürükleyin veya tıklayıp seçin<input type="file" id="fPdf" accept=".pdf,application/pdf"><small id="sPdf"></small></label>
+<label class="drop" id="dArs"><b>Mevcut arşiv (.xlsx)</b>İsteğe bağlı; yoksa tüm tablolar eksik görünür<input type="file" id="fArs" accept=".xlsx"><small id="sArs"></small></label>
+</div><div id="durum" style="margin-top:10px"></div></section>
+<div id="sonuc"></div>
+</main>
+<script src="vendor/pdf.min.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script src="js/01_ortak.js"></script><script src="js/02_ekarsit_pdf.js"></script><script src="js/03_arsiv.js"></script><script src="js/04_kapsam.js"></script>
+<script src="js/10_arayuz.js"></script>
+</body></html>

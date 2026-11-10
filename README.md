@@ -9,6 +9,14 @@ e-Karşıt tutanak PDF'sini ve mevcut arşiv dosyasını yükleyin; e-Karşıt s
 - e-Karşıt'a yüklenecek 7 Excel dosyasını gerçek şablon biçiminde üretir.
 - Arşivi aynı bilgilerle günceller.
 
+## Kullanım
+
+1. `index.html` dosyasını tarayıcıda açın (Chrome/Edge önerilir) veya GitHub Pages ile yayınlayın.
+2. e-Karşıt tutanak PDF'ini ve (varsa) arşiv `.xlsx` dosyasını yükleyin.
+3. Ekranda tutanak özeti, tespit edilen dönemler, faturalar ve 7 tablonun hazır/eksik durumu görünür.
+
+Yerel test (arayüzsüz): `npm install` ve `node tests/run.js yerel/<pdf> yerel/<xlsx>`. Gerçek dosyalar `yerel/` klasöründe tutulur; `.gitignore` bunu dışlar.
+
 ## Durum
 
 Planlama aşaması. Ayrıntılar için `PLAN.md`, iş listesi için `YAPILACAKLAR.md`.
