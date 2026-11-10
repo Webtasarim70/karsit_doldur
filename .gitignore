@@ -1,0 +1,14 @@
+# Gerçek veriler repoya girmesin
+*.xlsx
+*.xlsm
+*.xls
+*.pdf
+*.zip
+ARSIV_*
+yerel/
+ornek-veri/
+
+# Araçlar
+node_modules/
+.DS_Store
+Thumbs.db
