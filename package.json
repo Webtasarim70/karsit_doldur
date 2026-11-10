@@ -1,0 +1,1 @@
+{"name":"karsit_doldur","private":true,"description":"e-Karşıt PDF + arşiv → e-Karşıt Excel dosyaları","scripts":{"test":"node tests/run.js"},"devDependencies":{"exceljs":"^4.4.0","pdfjs-dist":"2.16.105"}}

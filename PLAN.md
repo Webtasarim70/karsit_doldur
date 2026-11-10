@@ -87,7 +87,7 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 - Başlıklar: `A)` YMM, `B)` tasdik hizmeti verilen mükellef, sözleşme tablosu, `C)` nezdinde incelenen mükellefin mal/hizmet teslim ettiği mükellef, `Ç)` nezdinde incelenen mükellef. Başlık verinin **üstünde**; etiket sütunu x<100, değer sütunu x≥100, değerler etiket satırına dikey ortalı (çok satırlı değerler için en yakın etiket).
 - Sözleşme tablosu 5 sütun: başlangıç, bitiş, tarih, seri-sıra no, sisteme girildiği tarih. Fatura dönemini kapsayan sözleşme seçilir.
 - Fatura tablosu (bölüm 3): uzun fatura numarası iki satıra bölünebilir (konuma göre birleştirilir). `Faturanın Tutarı` = matrah (KDV oranıyla doğrulandı). Satırlar tarih hücresine en yakın konumla gruplanır.
-- Prototip: `prototip/e_karsit_pdf_konum_ayristirici.js`. ekarsit'teki metin tabanlı `parseTutanak` yedek olarak kalır.
+- Kod: `js/02_ekarsit_pdf.js` (iki farklı PDF'te doğrulandı). ekarsit'teki metin tabanlı `parseTutanak` gerekirse yedek olarak kullanılır.
 
 ## ekarsit'ten yeniden kullanılacak parçalar
 
@@ -102,7 +102,19 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 | `12_efatura_tools.js`, `13_xml_kdv_listesi.js` | tedarikçi için e-fatura XML |
 | `vendor/` | pdfjs, exceljs, xlsx |
 
-Modüller global değişken ve fonksiyonlara bağlı; kopyalarken bağımlılık haritası çıkarılacak, kullanılmayan UI/menü kodu alınmayacak.
+**Karar (güncel):** ekarsit modülleri UI ve global duruma sıkı bağlı olduğundan toptan kopyalanmıyor. Bu repoda küçük, test edilebilir modüller yazılıyor (`js/01_ortak.js` … `js/04_kapsam.js`; Node'da `tests/run.js` ile denenir). ekarsit'ten yalnızca şunlar taşınacak: 7 gömülü e-Karşıt şablonu, belge ayrıştırıcıları (KDV beyanname/tahakkuk, muhtasar, e-berat) ve vendor kütüphaneleri.
+
+## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
+
+- **Arşiv, Ç) mükellefe aittir.** Örnek arşivin VKN'si yeni PDF'teki Ç) VKN'siyle eşleşti; eski PDF'te eşleşmeyince uyarı üretildi.
+- **A bölümünde ek satır olabilir:** "YMM ŞİRKETİ VERGİ KİMLİK NUMARASI / ÜNVANI". Etiket listesinde yoksa değeri bir önceki alana (telefon) karışıyor.
+- **Sözleşme tablosu birden fazla olabilir** ("KDV iadesi tasdik dönemi" ve "tasdik dönemi"); sütun başlıkları tablodan tabloya farklı yazılıyor, sütunlar başlık merkezinden bulunuyor.
+- **Sayı alanı** her zaman "EKARSIT" içermiyor (örn. `2026-723`); "Sayı" etiketinin yanındaki değer alınıyor.
+- **TOPLAM satırı:** tutar etiketle aynı hizada değil (6 birim yukarıda); ayrı bir bant olarak dışlanmazsa son faturanın KDV'sine karışıyor. PDF toplamı ile satır toplamı karşılaştırılıyor ve uyuşmazlık uyarı olarak çıkıyor.
+- **Arşivde sayı biçimleri karışık:** aynı sütunda hem sayı hem `29.603.687,27` gibi metin var. Okurken sayıya normalize ediliyor; çıktıda gerçek sayı yazılacak.
+- **ETTN**, arşivde e-Defter satırlarının "Açıklama" sütununda tutuluyor.
+- **Arşiv yıl bazlı:** örnek arşivde yalnızca `ARŞİV 2025` var, tutanak ise 2026 (Temmuz-Ağustos) faturaları içeriyor. Bu durumda defter, muhtasar, KDV ve tedarikçi tablolarının tamamı yeni belgelerden tamamlanmalı; yalnızca ortaklık ve imalatçı arşivden gelir.
+- **Arşivde tedarikçi bölümü boş** (yalnızca başlık); tedarikçi verisi e-fatura XML'den veya elle gelecek.
 
 ## Riskler ve kararlar
 

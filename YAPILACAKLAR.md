@@ -4,23 +4,25 @@
 
 ## Bekleyen girdiler (test için)
 
-- [ ] Örnek arşiv dosyası (`ARSIV_…xlsx`; veriler anonimleştirilebilir)
+- [x] Örnek arşiv dosyası (`ARSIV_TUZLA…`, yalnızca ARŞİV 2025 sayfası)
 - [ ] KDV beyannamesi PDF, KDV tahakkuk PDF, muhtasar PDF
 - [ ] e-Berat dosyası (XML veya PDF)
 - [ ] Muavin (PDF veya Excel) ve e-fatura XML örnekleri
-- [ ] Birden fazla e-Karşıt PDF örneği (çok fatura / çok sayfa)
+- [x] İki e-Karşıt PDF örneği (1 fatura / 9 fatura)
 
 ## Aşama 1 — Yükleme ve PDF analizi
 
-- [ ] Proje iskeleti (`index.html`, `css/`, `js/`) ve ekarsit'ten gereken modüllerin bağımlılık haritası
+- [x] Modül yapısı (`js/01_ortak.js` … `js/04_kapsam.js`, `tests/run.js`); toptan kopyalama yerine küçük modüller (bkz. PLAN.md)
+- [ ] `index.html` ve arayüz iskeleti
 - [ ] Toplu yükleme ve belge türü tanıma
-- [ ] e-Karşıt PDF analizi (A, B, C, Ç, sözleşme, fatura tablosu)
-- [ ] Dönem kapsamı (fatura ayı, önceki ay, yıl)
+- [x] e-Karşıt PDF analizi (A, B, C, Ç, birden fazla sözleşme, fatura tablosu, TOPLAM kontrolü)
+- [x] Dönem kapsamı (fatura ayı, önceki ay, yıl)
 
 ## Aşama 2 — Arşiv ve eksik paneli
 
-- [ ] Arşiv okuma ve VKN eşleşme kontrolü
-- [ ] Tablo bazında arşiv/eksik durumu ve eksik paneli
+- [x] Arşiv okuma (karışık sayı biçimleri normalize) ve VKN eşleşme kontrolü
+- [x] Tablo bazında arşiv/eksik durumu (komut satırı)
+- [ ] Eksik paneli (arayüz)
 
 ## Aşama 3 — Belgelerden tamamlama
 
