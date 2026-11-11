@@ -33,8 +33,8 @@ const near=i=>C.reduce((a,v,j)=>Math.abs(v-ctr(i))<Math.abs(C[a]-ctr(i))?j:a,0);
 const an=body.filter(i=>/^\d{2}\.\d{2}\.\d{4}$/.test(i.s.trim())&&near(i)===0).map(i=>i.k);
 const rows=an.map(k=>({k,c:{}}));
 body.forEach(i=>{const g=rows.reduce((a,b)=>Math.abs(b.k-i.k)<Math.abs(a.k-i.k)?b:a);(g.c[K[near(i)]]??=[]).push(i)});
-rows.forEach(g=>{const f=k=>join(g.c[k]||[],' ');let no=join(g.c.no||[],''),se=f('seri');if(se&&!no.startsWith(se))no=se+' '+no;
-r.inv.push({tarih:f('tarih'),no,matrah:f('tutar'),kdv:f('kdv'),yev:[f('dk'),f('yev')].filter(Boolean).join('/'),od:(/çek/i.test(f('od'))?'Çek':/banka|havale|eft/i.test(f('od'))?'Banka':/nakit/i.test(f('od'))?'Nakit':'')})})}
+rows.forEach(g=>{const f=k=>join(g.c[k]||[],' ');const no=join(g.c.no||[],''),se=f('seri'),od=f('od');
+r.inv.push({tarih:f('tarih'),seri:se,no,matrah:f('tutar'),kdv:f('kdv'),dk:f('dk'),yevNo:f('yev'),odeme:od})})}
 const tpz=it.find(i=>/^TOPLAM/i.test(i.s.trim())&&h3&&i.k<h3.k&&(!h4||i.k>h4.k));r.toplam=tpz?it.filter(i=>Math.abs(i.k-tpz.k)<10&&/^[\d.,]+$/.test(i.s.trim())).sort((a,b)=>a.x-b.x).map(i=>i.s.trim()):[];
 return r}
 

@@ -14,8 +14,9 @@ e-Karşıt tutanak PDF'sini ve mevcut arşiv dosyasını yükleyin; e-Karşıt s
 1. `index.html` dosyasını tarayıcıda açın (Chrome/Edge önerilir) veya GitHub Pages ile yayınlayın.
 2. e-Karşıt tutanak PDF'ini ve (varsa) arşiv `.xlsx` dosyasını yükleyin.
 3. Ekranda tutanak özeti, tespit edilen dönemler, faturalar ve 7 tablonun hazır/eksik durumu görünür.
+4. "Excel dosyalarını indir" ile 7 e-Karşıt Excel dosyası ZIP olarak indirilir.
 
-Yerel test (arayüzsüz): `npm install` ve `node tests/run.js yerel/<pdf> yerel/<xlsx>`. Gerçek dosyalar `yerel/` klasöründe tutulur; `.gitignore` bunu dışlar.
+Yerel test (arayüzsüz): `npm install`, `node tests/run.js yerel/<pdf> yerel/<xlsx>` (kapsam raporu) ve `node tests/cikti.js yerel/<pdf> yerel/<xlsx> <klasör> [yıl]` (Excel çıktıları). Gerçek dosyalar `yerel/` klasöründe tutulur; `.gitignore` bunu dışlar.
 
 ## Durum
 

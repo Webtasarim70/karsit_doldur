@@ -43,9 +43,18 @@ function render(){
  h.push('<section><h2>4. Kapsam: hangi veriler hazır, hangileri eksik?</h2>'+
   (a?`<p class="note" style="margin:0 0 10px">Arşiv: ${esc(a.mukellef.unvan||'—')} · yıllar: ${a.yillar.join(', ')} · ortak ${a.ortaklar.length}, defter ${a.defterler.length}, işçi ${a.isciler.length}, KDV ${a.kdv.length}, imalatçı ${a.imalatcilar.length}, tedarikçi ${a.tedarikciler.length}</p>`:'')+
   '<div class="tabs">'+k.tablolar.map(t=>`<div class="tab ${t.durum}"><h3><span>${esc(t.ad)}</span><span class="rz">${{tamam:'Tamam',kismen:'Kısmen',eksik:'Eksik'}[t.durum]} · ${t.var}/${t.gerekli}</span></h3>`+
-   (t.not?`<p>${esc(t.not)}</p>`:'')+(t.eksik.length?`<div class="chips">${t.eksik.map(e=>`<span class="chip er">${esc(e)}</span>`).join('')}</div>`:'')+`<p>Kaynak: ${esc(t.kaynak)}</p></div>`).join('')+'</div>'+
+   (t.not?`<p>${esc(t.not)}</p>`:'')+(t.eksik.length?`<div class="chips">${t.eksik.slice(0,10).map(e=>`<span class="chip er">${esc(e)}</span>`).join('')+(t.eksik.length>10?`<span class="chip">+${t.eksik.length-10} daha</span>`:'')}</div>`:'')+`<p>Kaynak: ${esc(t.kaynak)}</p></div>`).join('')+'</div>'+
   '<p class="note">Sonraki aşamada eksikler, yükleyeceğiniz belgelerden (KDV beyanname ve tahakkuk, muhtasar, e-berat, XML) tamamlanacak.</p></section>');
+const sec=secim(p,S.ars||BOS),dur={tamam:'Hazır',kismen:'Eksik veri var',eksik:'Eksik veri var'},bos=k.tablolar.some(t=>t.durum!=='tamam');
+ h.push('<section><h2>5. e-Karşıt Excel dosyaları</h2><div class="tw"><table><thead><tr><th>Tablo</th><th class="n">Satır</th><th>Durum</th></tr></thead><tbody>'+k.tablolar.map(t=>`<tr><td>${esc(t.ad)}</td><td class="n">${sec[t.id].length}</td><td>${dur[t.durum]}</td></tr>`).join('')+'</tbody></table></div>'+
+  '<p style="margin:10px 0 0"><button id="bIndir" class="btn">Excel dosyalarını indir (ZIP)</button></p>'+
+  (bos?'<p class="note">Eksik veri olan tablolar, şablon biçiminde yalnızca mevcut satırlarla üretilir. Eksikleri tamamlamadan e-Karşıt’a yüklemeyin.</p>':'')+'</section>');
  $('sonuc').innerHTML=h.join('')}
+$('sonuc').addEventListener('click',async e=>{if(e.target.id!=='bIndir'||!S.pdf)return;const b=e.target;b.disabled=true;const t0=b.textContent;b.textContent='Hazırlanıyor…';
+ try{const files=await excelCikti(secim(S.pdf,S.ars||BOS),{vkn:S.pdf.kf.vn,tarih:new Date()}),z=zip(files.map(f=>({name:f.ad,data:f.data}))),
+   a=document.createElement('a');a.href=URL.createObjectURL(new Blob([z],{type:'application/zip'}));a.download=`${(S.pdf.kf.vn||'mukellef').replace(/\D/g,'')}_e-Karsit_Excel.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+ catch(err){console.error(err);msg('Excel dosyaları üretilemedi: '+esc(err.message),'er')}
+ b.disabled=false;b.textContent=t0});
 [['pdf','dPdf','fPdf'],['ars','dArs','fArs']].forEach(([t,d,f])=>{
  $(f).addEventListener('change',e=>{yukle(t,e.target.files[0]);e.target.value=''});
  ['dragover','dragleave','drop'].forEach(n=>$(d).addEventListener(n,e=>{e.preventDefault();$(d).classList.toggle('on',n==='dragover');if(n==='drop')yukle(t,e.dataTransfer.files[0])}))});

@@ -24,7 +24,7 @@ function parseSheet(ws,yil){
   if(k==='tedarikci'){let d='';for(let j=i+1;j<rows.length;j++){const r=rows[j],a=t(r[0]);if(r.slice(0,10).every(x=>x===''))continue;
    const m=/^(\d{1,2})\s*\/\s*(\d{4})/.exec(a);if(m){d=normDonem(m[1]+'.'+m[2]);continue}
    if(!t(r[1])||/ADI SOYADI/.test(U(r[1])))continue;
-   out.tedarikciler.push({donem:d,ad:t(r[1]),vkn:t(r[2]),vd:t(r[3]),tarih:normTarih(r[4]),seri:t(r[5]),no:t(r[6]),tutar:parseNum(r[7])})}}
+   out.tedarikciler.push({donem:d,ad:t(r[1]),vkn:t(r[2]),vd:t(r[3]),tarih:normTarih(r[4]),seri:t(r[5]),no:t(r[6]),matrah:parseNum(r[7]),kdv:parseNum(r[8]),gumTarih:normTarih(r[9]),gumNo:t(r[10])})}}
  });
  return out}
 function parseArsiv(wb){const sayfalar=[];wb.eachSheet(ws=>{if(!/AR[ŞS][İI]V/i.test(ws.name))return;const y=(/(\d{4})/.exec(ws.name)||[])[1]||'';sayfalar.push(parseSheet(ws,y))});

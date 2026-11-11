@@ -114,7 +114,18 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 - **Arşivde sayı biçimleri karışık:** aynı sütunda hem sayı hem `29.603.687,27` gibi metin var. Okurken sayıya normalize ediliyor; çıktıda gerçek sayı yazılacak.
 - **ETTN**, arşivde e-Defter satırlarının "Açıklama" sütununda tutuluyor.
 - **Arşiv yıl bazlı:** örnek arşivde yalnızca `ARŞİV 2025` var, tutanak ise 2026 (Temmuz-Ağustos) faturaları içeriyor. Bu durumda defter, muhtasar, KDV ve tedarikçi tablolarının tamamı yeni belgelerden tamamlanmalı; yalnızca ortaklık ve imalatçı arşivden gelir.
+- **Arşivde bir e-Defter satırında ETTN biçimi bozuk** (`40ac-80db-5b29-…`, ilk blok kısa); okuyucu değeri olduğu gibi aktarır.
 - **Arşivde tedarikçi bölümü boş** (yalnızca başlık); tedarikçi verisi e-fatura XML'den veya elle gelecek.
+
+## Excel çıktı kuralları (uygulandı)
+
+- Şablon yalnızca başlık/biçim kaynağı; örnek satırlar taşınmaz. Fatura dosyasındaki "Ödeme Şekli Referans" sayfası aynen kopyalanır.
+- Metin sütunları metin (`@`); tutar sütunları (fatura matrah/KDV, KDV tablosu, tedarikçi matrah/KDV) gerçek sayı (`#,##0.00`).
+- Defter türü ve belge türü kod biçiminde yazılır: arşivdeki `e-Defter Yevmiye Defteri` → `E_DEFTER_YEVMIYE_DEFTERI`, `ENVANTER DEFTERİ` → `ENVANTER_DEFTERI`, `Sanayi Sicil Belgesi` → `SANAYI_SICIL_BELGESI`, `Diger` → `DIGER`.
+- Pay oranı 4 ondalıkla yazılır (`100` → `100.0000`).
+- Faturalar tablosu "tamam" sayılması için her faturada defter kayıt tarihi, yevmiye no ve ödeme şekli dolu olmalı; PDF'te bunlar boş geldiğinde muavinden tamamlanacağı belirtilir.
+- Çıktıya yalnızca kapsama giren satırlar girer: gerekli defterler, fatura dönemleri için işçi sayıları, KDV dönemleri, dönem başına en yüksek 10 tedarikçi alımı.
+- Arşivde tedarikçi satırı sütunları: A sıra no, B ad, C VKN, D vergi dairesi, E tarih, F seri, G no, H matrah, I KDV, J gümrük tarihi, K gümrük tescil no.
 
 ## Riskler ve kararlar
 

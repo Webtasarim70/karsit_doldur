@@ -34,9 +34,10 @@
 
 ## Aşama 4 — Çıktı
 
-- [ ] 7 Excel (gerçek şablon biçimi, tutarlar gerçek sayı)
+- [x] 7 Excel (gerçek şablon biçimi, tutarlar gerçek sayı, defter/belge türü kodları); arşivde bulunan satırlarla
+- [ ] Excel'lere belgelerden gelen eksik satırların eklenmesi (Aşama 3 bağımlı)
 - [ ] Arşiv güncelleme (fark onayı, ARŞİV dışı sayfaları koruma)
-- [ ] ZIP çıktısı
+- [x] ZIP çıktısı (arayüzde 5. bölüm)
 
 ## Aşama 5 — Belgeler ve test
 
