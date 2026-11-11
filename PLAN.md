@@ -110,7 +110,7 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 
 | Adım | Girdi | Beslediği tablo | Notlar |
 |---|---|---|---|
-| 1 | e-Karşıt tutanak PDF'i | A, B, C, Ç, sözleşme, 3. fatura listesi | 4 farklı PDF'te doğrulandı; alanlar düzenlenebilir |
+| 1 | e-Karşıt tutanak PDF'i | A, B, C, Ç, sözleşme, 3. fatura listesi | 4 farklı PDF'te doğrulandı; salt okunur (A, B, C, Ç Excel'lere aktarılmaz). Ç telefonu PDF'te boş gelir, e-Karşıt'a her tutanakta elle girilir |
 | 2 | Arşiv `.xlsx` | 1, 2, 4, 5, 6, 7 | Yıl bazlı sayfalar; karışık sayı biçimleri |
 | 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim; her ikisi için beyanname ve tahakkuk örneği var |
 | 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |

@@ -4,31 +4,26 @@ const {fmtTR,parseNum,donemOfTarih}=KD;
 const S={adim:1,onay:{},pdf:null,ars:null,pdfAd:'',arsAd:''},$=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const BOS={mukellef:{},yillar:[],sayfalar:[],ortaklar:[],defterler:[],isciler:[],kdv:[],imalatcilar:[],tedarikciler:[]};
-const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o),set=(o,p,v)=>{const k=p.split('.'),l=k.pop();k.reduce((a,x)=>a[x]??={},o)[l]=v};
 pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
 const msg=(t,k)=>$('durum').innerHTML=t?`<div class="msg ${k||'in'}">${t}</div>`:'';
-/* ---------- alan yardımcıları ---------- */
-const I=(p,l,w)=>`<label style="grid-column:span ${w||1}">${l}<input data-p="${p}" value="${esc(get(S,p))}"></label>`;
-const grp=(t,p,fs,not)=>`<div class="card"><h3>${t}</h3><div class="g">${fs.map(([k,l,w])=>I(p+'.'+k,l,w)).join('')}</div>${not?`<p class="note">${not}</p>`:''}</div>`;
-const FIRMA=[['adi','Adı Soyadı / Ünvanı',2],['vn','Vergi/T.C. Kimlik No'],['vd','Vergi Dairesi'],['adres','Adres',3],['tel','Telefon']];
+/* ---------- gösterim yardımcıları (Adım 1 salt okunur) ---------- */
+const dl=(o,rows)=>'<dl>'+rows.filter(r=>!r[2]||o[r[0]]).map(([k,l])=>`<dt>${l}</dt><dd>${esc(o[k])||'—'}</dd>`).join('')+'</dl>';
+const kart=(t,o,rows,ek)=>`<div class="card"><h3>${t}</h3>${dl(o,rows)}${ek||''}</div>`;
+const FIRMA=[['adi','Ünvan'],['vn','Vergi/T.C. Kimlik No'],['vd','Vergi Dairesi'],['adres','Adres'],['tel','Telefon']];
 const drop=(id,fid,ba,acc,ad,alt)=>`<label class="drop${ad?' ok':''}" id="${id}" data-tur="${id==='dPdf'?'pdf':'ars'}"><b>${ba}</b>${alt}<input type="file" id="${fid}" accept="${acc}"><small>${esc(ad)}</small></label>`;
-function tablo(t,p,cols,L,not){return `<div class="card"><h3>${t}</h3><div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join('')}<th></th></tr></thead><tbody>${L.map((r,i)=>`<tr>${cols.map(([k])=>`<td><input data-p="${p}.${i}.${k}" value="${esc(r[k])}"></td>`).join('')}<td><button class="x" data-act="del:${p}:${i}" title="Satırı sil">✕</button></td></tr>`).join('')}</tbody></table></div><button class="btn2" data-act="add:${p}" style="margin-top:8px">+ Satır ekle</button>${not?`<p class="note">${not}</p>`:''}</div>`}
 /* ---------- dönem ve doğrulama kutusu ---------- */
 function donHtml(){const p=S.pdf,k=kapsam(p,BOS),D=k.donemler,uy=k.uyari.filter(u=>!u.startsWith('Arşiv'));
  const tp=p.toplam.length>=2?(uy.some(u=>u.startsWith('PDF toplamı'))?'':'<span class="chip">✓ Satır toplamı PDF TOPLAM ile eşleşti</span>'):'<span class="chip er">PDF’te TOPLAM satırı okunamadı</span>';
  return `<div class="chips"><span class="chip">Fatura dönemi: <b>${D.fatura.join(', ')||'—'}</b></span><span class="chip">KDV dönemleri: <b>${D.kdv.join(', ')||'—'}</b></span><span class="chip">Yıl: <b>${D.yillar.join(', ')||'—'}</b></span><span class="chip">Toplam: <b>${fmtTR(k.tutar.matrah)} / ${fmtTR(k.tutar.kdv)}</b></span>${tp}</div>`+uy.map(u=>`<div class="msg er" style="margin-top:8px">${esc(u)}</div>`).join('')}
 /* ---------- Adım 1: e-Karşıt PDF ---------- */
+function roTablo(t,cols,L,bos){return `<div class="card"><h3>${t}</h3>`+(L.length?`<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join('')}</tr></thead><tbody>${L.map(r=>`<tr>${cols.map(([k,,f])=>`<td>${esc(f?f(r[k]):r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<p class="note">${bos}</p>`)+'</div>'}
 function s1(){let h=`<section><h2>1. e-Karşıt tutanak PDF’i</h2>${drop('dPdf','fPdf','e-Karşıt tutanak PDF’i','.pdf,application/pdf',S.pdfAd,'Sürükleyin veya tıklayıp seçin')}</section>`;
- if(!S.pdf)return h;const p=S.pdf;
- h+=`<section><h2>Okunan bilgiler (PDF’teki sırayla; yanlış okunan alanı düzeltebilirsiniz)</h2>`+
-  grp('Tutanak','pdf',[['sayi','Sayı',2],['tarih','Tarih']])+
-  grp('A) Karşıt incelemeyi yapan yeminli mali müşavir','pdf.ymm',[['adi','Adı ve Soyadı',2],['vn','Vergi/T.C. Kimlik No'],['vd','Vergi Dairesi'],['muhur','Mühür No'],['sicil','Sicil No'],['oda','Bağlı Olduğu Oda',2],['adres','Adres',3],['tel','Telefon'],['sirket','YMM şirketi (varsa): VKN / Ünvan',4]])+
-  grp('B) Tasdik hizmeti verilen mükellef (KDV iadesi talep eden)','pdf.firma',FIRMA)+
-  tablo('Tasdik dönemi sözleşme bilgileri','pdf.contracts',[['tip','Tür'],['bas','Başlangıç dönemi'],['bit','Bitiş dönemi'],['tarih','Sözleşme tarihi'],['seri','Seri-sıra no'],['sistem','Sisteme girildiği tarih']],p.contracts,'Tür: kdvIadesi = KDV iadesi tasdik sözleşmesi, tasdik = genel tasdik sözleşmesi.')+
-  grp('C) Mal/hizmet teslim edilen mükellef (PDF’te yoksa boş bırakın)','pdf.c',FIRMA)+
-  grp('Ç) Nezdinde karşıt inceleme yapılan mükellef','pdf.kf',FIRMA)+
-  tablo('3- Karşıt incelemeye konu faturalar','pdf.inv',[['tarih','Faturanın tarihi'],['seri','Serisi'],['no','Numarası'],['matrah','Tutarı (TL)'],['kdv','K.D.V. (TL)'],['dk','Defter kayıt tarihi'],['yevNo','Yevmiye no'],['odeme','Ödeme şekli'],['aciklama','Açıklama'],['hatali','Hatalı satır açıklama']],p.inv,
-   'Defter kayıt tarihi, yevmiye no ve ödeme şekli PDF’te boşsa sonraki adımlarda muavinden tamamlanır.')+
+ if(!S.pdf)return h;const p=S.pdf,ymm=[['adi','Adı ve Soyadı'],['vn','Vergi/T.C. Kimlik No'],['vd','Vergi Dairesi'],['muhur','Mühür No'],['sicil','Sicil No'],['oda','Bağlı Olduğu Oda'],['adres','Adres'],['tel','Telefon'],['sirket','YMM şirketi (VKN / Ünvan)',1]];
+ const telNot=p.kf.tel?'':'<div class="msg wr" style="margin:8px 0 0">Ç) telefon numarası PDF’te boş gelir. e-Karşıt sistemine her tutanakta elle girmeniz gerekir.</div>';
+ h+=`<section><div class="grid4">`+kart('Tutanak',p,[['sayi','Sayı'],['tarih','Tarih']])+kart('A) Karşıt incelemeyi yapan YMM',p.ymm,ymm)+kart('B) Tasdik hizmeti verilen mükellef',p.firma,FIRMA)+
+  (p.c&&p.c.adi?kart('C) Mal/hizmet teslim edilen mükellef',p.c,FIRMA):'')+kart('Ç) Nezdinde karşıt inceleme yapılan mükellef',p.kf,FIRMA,telNot)+`</div></section>`+
+  `<section>`+roTablo('Tasdik dönemi sözleşme bilgileri',[['tip','Tür',t=>t==='kdvIadesi'?'KDV iadesi':'Tasdik'],['bas','Başlangıç dönemi'],['bit','Bitiş dönemi'],['tarih','Sözleşme tarihi'],['seri','Seri-sıra no'],['sistem','Sisteme girildiği tarih']],p.contracts,'Sözleşme bilgisi okunamadı.')+
+  roTablo('3- Karşıt incelemeye konu faturalar',[['tarih','Faturanın tarihi'],['seri','Serisi'],['no','Numarası'],['matrah','Tutarı (TL)'],['kdv','K.D.V. (TL)'],['dk','Defter kayıt tarihi'],['yevNo','Yevmiye no'],['odeme','Ödeme şekli']],p.inv,'Fatura okunamadı.')+
   `<div class="card"><h3>Tespit edilen dönemler</h3><div id="don">${donHtml()}</div></div></section>`;
  return h}
 /* ---------- Adım 2: Arşiv ---------- */
@@ -75,12 +70,10 @@ async function yukle(tur,file){if(!file)return;msg(`${esc(file.name)} okunuyor�
 /* ---------- olaylar (kök üzerinde) ---------- */
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='fPdf'||t.id==='fArs'){yukle(t.id==='fPdf'?'pdf':'ars',t.files[0]);t.value=''}});
 ['dragover','dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{const d=e.target.closest&&e.target.closest('.drop');if(!d)return;e.preventDefault();d.classList.toggle('on',n==='dragover');if(n==='drop')yukle(d.dataset.tur,e.dataTransfer.files[0])}));
-document.addEventListener('input',e=>{const t=e.target,p=t.dataset&&t.dataset.p;if(!p)return;set(S,p,t.value);if(/^pdf\.(inv\.\d+\.(tarih|matrah|kdv)|kf\.vn)$/.test(p)&&$('don')){$('don').innerHTML=donHtml();$('bIleri')&&($('bIleri').disabled=!ADIM[S.adim-1].hazir())}});
 document.addEventListener('click',async e=>{const b=e.target;
  if(b.dataset.adim)return git(+b.dataset.adim);
  if(b.id==='bGeri')return git(S.adim-1);
  if(b.id==='bIleri'){S.onay[S.adim]=true;return git(S.adim+1)}
- if(b.dataset.act){const[op,p,i]=b.dataset.act.split(':'),L=get(S,p);if(op==='add')L.push({});else L.splice(+i,1);if(p==='pdf.inv'&&!L.length)L.push({});S.onay={};render();return}
  if(b.id==='bIndir'){b.disabled=true;const t0=b.textContent;b.textContent='Hazırlanıyor…';
   try{const files=await excelCikti(secim(S.pdf,S.ars||BOS),{vkn:S.pdf.kf.vn,tarih:new Date()}),z=zip(files.map(f=>({name:f.ad,data:f.data}))),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([z],{type:'application/zip'}));a.download=`${(S.pdf.kf.vn||'mukellef').replace(/\D/g,'')}_e-Karsit_Excel.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
   catch(err){console.error(err);msg('Excel dosyaları üretilemedi: '+esc(err.message),'er')}
