@@ -25,16 +25,18 @@ s.filter(i=>/^\d{2}\.\d{4}$/.test(i.s.trim())&&near(i)===0).forEach(an=>{const o
 s.filter(i=>Math.abs(i.k-an.k)<4).forEach(i=>{const k=K[near(i)];o[k]=(o[k]?o[k]+' ':'')+i.s.trim()});r.contracts.push(o)})});
 /* faturalar */
 r.inv=[];if(h3){const s=sec(h3,h4||hO),HW=/^(Faturanın|Tarihi|Serisi|Numarası|Tutarı \(TL\)|K\.D\.V\. \(TL\)|Defter Kayıt|Defter KayıtTarihi|Yevmiye|Ödeme Şekli ve|Ödemeye İlişkin|Bilgiler|Açıklama|Hatalı Satır|Tarih)$/;
-const tp=s.find(i=>/^TOPLAM/i.test(i.s.trim())),body=s.filter(i=>!HW.test(i.s.trim())&&(!tp||i.k>tp.k+10&&!/^TOPLAM/i.test(i.s.trim())));
+const tp=s.find(i=>/^TOPLAM/i.test(i.s.trim())),sf=i=>Math.ceil(-i.k/1000),cand=s.filter(i=>!HW.test(i.s.trim())&&(!tp||i.k<tp.k-10||i.k>tp.k+10)&&!/^TOPLAM/i.test(i.s.trim()));
 const hs=s.filter(i=>HW.test(i.s.trim())),by=(re)=>hs.filter(i=>re.test(i.s.trim())).sort((a,b)=>a.x-b.x);
 const T=by(/^Tarihi$/),N=by(/^Numarası$/),g=(a,i,d)=>a[i]?ctr(a[i]):d;
 const C=[g(T,0,46),g(by(/^Serisi$/),0,93),g(N,0,146),g(by(/^Tutarı/),0,205),g(by(/^K\.D\.V/),0,262),g(T,1,321),g(N,1,377),g(by(/^Bilgiler$/),0,437),497,g(by(/^Hatalı/),0,552)],K=['tarih','seri','no','tutar','kdv','dk','yev','od','ack','hat'];
 const near=i=>C.reduce((a,v,j)=>Math.abs(v-ctr(i))<Math.abs(C[a]-ctr(i))?j:a,0);
+const an0=cand.filter(i=>/^\d{2}\.\d{2}\.\d{4}$/.test(i.s.trim())&&near(i)===0),cut={};an0.forEach(i=>{const pg=sf(i);if(cut[pg]==null||i.k>cut[pg])cut[pg]=i.k});
+const body=cand.filter(i=>cut[sf(i)]!=null&&i.k<cut[sf(i)]+12&&(!tp||i.k>tp.k+10));
 const an=body.filter(i=>/^\d{2}\.\d{2}\.\d{4}$/.test(i.s.trim())&&near(i)===0).map(i=>i.k);
 const rows=an.map(k=>({k,c:{}}));
 body.forEach(i=>{const g=rows.reduce((a,b)=>Math.abs(b.k-i.k)<Math.abs(a.k-i.k)?b:a);(g.c[K[near(i)]]??=[]).push(i)});
 rows.forEach(g=>{const f=k=>join(g.c[k]||[],' ');const no=join(g.c.no||[],''),se=f('seri'),od=f('od');
-r.inv.push({tarih:f('tarih'),seri:se,no,matrah:f('tutar'),kdv:f('kdv'),dk:f('dk'),yevNo:f('yev'),odeme:od})})}
+r.inv.push({tarih:f('tarih'),seri:se,no,matrah:f('tutar'),kdv:f('kdv'),dk:f('dk'),yevNo:f('yev'),odeme:od,aciklama:f('ack'),hatali:f('hat')})})}
 const tpz=it.find(i=>/^TOPLAM/i.test(i.s.trim())&&h3&&i.k<h3.k&&(!h4||i.k>h4.k));r.toplam=tpz?it.filter(i=>Math.abs(i.k-tpz.k)<10&&/^[\d.,]+$/.test(i.s.trim())).sort((a,b)=>a.x-b.x).map(i=>i.s.trim()):[];
 return r}
 

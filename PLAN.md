@@ -104,6 +104,30 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 
 **Karar (güncel):** ekarsit modülleri UI ve global duruma sıkı bağlı olduğundan toptan kopyalanmıyor. Bu repoda küçük, test edilebilir modüller yazılıyor (`js/01_ortak.js` … `js/04_kapsam.js`; Node'da `tests/run.js` ile denenir). ekarsit'ten yalnızca şunlar taşınacak: 7 gömülü e-Karşıt şablonu, belge ayrıştırıcıları (KDV beyanname/tahakkuk, muhtasar, e-berat) ve vendor kütüphaneleri.
 
+## Girdi türleri ve adımlar (örnek veri setine göre)
+
+Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt PDF'iyle ve kendi belgeleriyle çalışır. Her adım ayrı onayla açılır (arayüzde de "Onayla ve devam et").
+
+| Adım | Girdi | Beslediği tablo | Notlar |
+|---|---|---|---|
+| 1 | e-Karşıt tutanak PDF'i | A, B, C, Ç, sözleşme, 3. fatura listesi | 4 farklı PDF'te doğrulandı; alanlar düzenlenebilir |
+| 2 | Arşiv `.xlsx` | 1, 2, 4, 5, 6, 7 | Yıl bazlı sayfalar; karışık sayı biçimleri |
+| 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim; her ikisi için beyanname ve tahakkuk örneği var |
+| 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
+| 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı; `berat.xslt` yalnızca görüntüleme stili |
+| 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Tahsilat satırlarından ("ÇEK ALINIŞI" vb.) ödeme şekli çıkarılacak |
+| 7 | 191 muavin (`.xlsx`), indirilecek KDV listesi (`.xls`), e-fatura XML/PDF | 7 Tedarikçi | Dönem başına en yüksek 10 alım |
+| 8 | Elle girişler | 1, 2, 6 | "İmalatçı değildir" gibi seçenekler |
+| 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
+
+**Referans:** "Karşıt İnceleme Tutanağı Cevabı.PDF", yüklemeden sonra e-Karşıt'ın tabloları nasıl gösterdiğini içerir (1-7. tablolar dolu). Çıktıyı doğrulamak için ve ileride "dolu cevap PDF'inden arşive aktarma" için kaynak olabilir.
+
+**Genel kurallar (örneklerden):**
+- Her tablo her firmada gerekmez: cevap PDF'inde "İmalatçı değildir." yazıyor. Eksik/gerekli hesabında "uygulanamaz" seçeneği olmalı.
+- Defterler firmaya göre değişir: e-Defter (GİB, berat no) veya noter tasdikli kağıt defter (Yevmiye Defteri, tasdik makamı/no).
+- Aynı belge türünün farklı biçimleri olabilir (KDV eski/yeni); okuyucular biçimi otomatik tanımalı.
+- Tek bir yüklemede farklı firmaların belgeleri karışabilir; her belgede VKN kontrol edilip tutanaktaki Ç) mükellefle eşleşmeyenler uyarılmalı.
+
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 
 - **Arşiv, Ç) mükellefe aittir.** Örnek arşivin VKN'si yeni PDF'teki Ç) VKN'siyle eşleşti; eski PDF'te eşleşmeyince uyarı üretildi.
