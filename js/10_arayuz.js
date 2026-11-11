@@ -27,12 +27,24 @@ function s1(){let h=`<section><h2>1. e-Karşıt tutanak PDF’i</h2>${drop('dPdf
   `<div class="card"><h3>Tespit edilen dönemler</h3><div id="don">${donHtml()}</div></div></section>`;
  return h}
 /* ---------- Adım 2: Arşiv ---------- */
-function s2(){let h=`<section><h2>2. Mevcut arşiv (.xlsx)</h2>${drop('dArs','fArs','Arşiv dosyası','.xlsx',S.arsAd,'İsteğe bağlı: arşiviniz yoksa bu adımı onaylayıp devam edebilirsiniz')}</section>`;
+const durum=v=>v?'<span class="chip ok">Arşivde var</span>':'<span class="chip er">Arşivde yok</span>';
+const sayi=v=>v==null?'':fmtTR(v);
+function arsUyumsuz(){const a=S.ars,vp=(S.pdf.kf.vn||'').trim(),va=a?(a.mukellef.vkn||'').trim():'';return !!(a&&va&&vp&&va!==vp)}
+function s2(){let h=`<section><h2>2. Mevcut arşiv (.xlsx)</h2>${drop('dArs','fArs','Arşiv dosyası','.xlsx',S.arsAd,'İsteğe bağlı: arşiviniz yoksa bu adımı onaylayıp devam edebilirsiniz')}`+(S.ars?'<p style="margin:10px 0 0"><button class="btn2" id="bArsKaldir">Arşivi kaldır</button></p>':'')+'</section>';
  const a=S.ars;if(!a)return h;
- const vp=(S.pdf.kf.vn||'').trim(),va=(a.mukellef.vkn||'').trim();
- h+=`<section><h2>Arşivden okunanlar</h2>`+(va&&vp&&va!==vp?`<div class="msg er">Arşivdeki VKN (${esc(va)}) tutanaktaki Ç) mükellef VKN’si (${esc(vp)}) ile eşleşmiyor. Doğru arşivi seçtiğinizden emin olun.</div>`:(va&&va===vp?'<div class="msg ok">Arşiv, Ç) mükellefle eşleşti.</div>':''))+
-  `<div class="card"><h3>Mükellef</h3><dl>${[['Ünvan','unvan'],['VKN','vkn'],['Vergi dairesi','vd'],['Adres','adres'],['Telefon','tel']].filter(r=>a.mukellef[r[1]]).map(r=>`<dt>${r[0]}</dt><dd>${esc(a.mukellef[r[1]])}</dd>`).join('')}</dl></div>`+
-  `<div class="card"><h3>İçerik</h3><div class="chips"><span class="chip">Arşiv yılları: <b>${a.yillar.join(', ')}</b></span><span class="chip">Ortak: <b>${a.ortaklar.length}</b></span><span class="chip">Defter: <b>${a.defterler.length}</b></span><span class="chip">İşçi sayısı: <b>${a.isciler.length}</b></span><span class="chip">KDV: <b>${a.kdv.length}</b></span><span class="chip">İmalatçı: <b>${a.imalatcilar.length}</b></span><span class="chip">Tedarikçi: <b>${a.tedarikciler.length}</b></span></div></div></section>`;
+ const vp=(S.pdf.kf.vn||'').trim(),va=(a.mukellef.vkn||'').trim(),e=arsivEslesme(S.pdf,a),D=e.donemler;
+ h+=(arsUyumsuz()?`<div class="msg er">Arşivdeki VKN (${esc(va)}) tutanaktaki Ç) mükellef VKN’si (${esc(vp)}) ile eşleşmiyor. Bu arşivle devam edilemez; doğru arşivi seçin veya arşivi kaldırın.</div>`:(va&&va===vp?'<div class="msg ok">Arşiv, Ç) mükellefle eşleşti.</div>':'<div class="msg wr">Arşivde mükellef VKN’si okunamadı; mükellefle eşleştiği doğrulanamadı.</div>'));
+ const yokYil=D.yillar.filter(y=>!a.yillar.includes(y));
+ if(yokYil.length)h+=`<div class="msg wr">Arşivde ARŞİV ${yokYil.join(', ')} sayfası yok; bu yıla ait veriler sonraki adımlarda eklenecek ve arşive yeni sayfa olarak yazılacak.</div>`;
+ const T=(t,cols,rows,bos)=>`<div class="card"><h3>${t}</h3>`+(rows.length?`<div class="tw"><table><thead><tr>${cols.map(c=>`<th${c[2]?' class="n"':''}>${c[1]}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(([k,,n])=>`<td${n?' class="n"':''}>${k==='_d'?r._d:esc(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<p class="note">${bos}</p>`)+'</div>';
+ h+=`<section><h2>Arşivden okunanlar</h2><p class="note" style="margin:0 0 10px">Aşağıda yalnızca bu tutanağın gerektirdiği kayıtlar gösterilir. “Arşivde yok” olanlar sonraki adımlardaki belgelerden tamamlanacaktır.</p>`+
+  `<div class="card"><h3>Mükellef</h3>${dl(a.mukellef,[['unvan','Ünvan'],['vkn','Vergi/T.C. Kimlik No'],['vd','Vergi Dairesi'],['adres','Adres'],['tel','Telefon']])}<div class="chips" style="margin-top:8px"><span class="chip">Arşiv yılları: <b>${a.yillar.join(', ')}</b></span></div></div>`+
+  T('1- Ortaklık bilgileri',[['ad','Adı Soyadı / Ünvanı'],['vkn','Vergi/T.C. Kimlik No'],['il','Bağlı olduğu il'],['vd','Bağlı olduğu vergi dairesi'],['pay','Pay oranı'],['aciklama','Açıklama']],e.ortak,'Arşivde ortak bilgisi yok.')+
+  T('2- Yasal defterler (bu tutanak için gerekenler)',[['ad','Gerekli defter'],['_d','Durum'],['nevi','Defterin nev’i'],['bas','Başlangıç'],['bit','Bitiş'],['makam','Tasdik makamı'],['tarih','Tasdik tarihi'],['no','Tasdik/berat no']],e.defter.map(x=>({ad:x.ad,_d:durum(x.satir),...(x.satir||{})})),'Gerekli defter yok.')+
+  T('4- Muhtasar çalışan sayıları',[['donem','Dönem'],['_d','Durum'],['sayi','Çalışan işçi sayısı',1],['vd','Beyannamenin verildiği vergi dairesi']],e.isci.map(x=>({donem:x.donem,_d:durum(x.satir),sayi:x.satir?x.satir.sayi:'',vd:x.satir?x.satir.vd:''})),'')+
+  T('5- KDV beyan bilgileri (fatura dönemi ve önceki dönem)',[['donem','Dönem'],['_d','Durum'],['teslim','Teslim ve hizmet bedeli',1],['matrah','KDV matrahı',1],['hesap','Hesaplanan KDV',1],['indirim','İndirimler toplamı',1],['odenecek','Ödenmesi gereken',1],['devreden','Sonraki döneme devreden',1],['tahakkuk','Tahakkuk fişi no']],e.kdv.map(x=>{const r=x.satir||{};return{donem:x.donem,_d:durum(x.satir),teslim:sayi(r.teslim),matrah:sayi(r.matrah),hesap:sayi(r.hesap),indirim:sayi(r.indirim),odenecek:sayi(r.odenecek),devreden:sayi(r.devreden),tahakkuk:r.tahakkuk||''}}),'')+
+  T('6- İmalatçı bilgileri',[['ad','Adı Soyadı / Ünvanı'],['vkn','Vergi/T.C. Kimlik No'],['oda','Sanayi odası'],['tarih','Belge tarihi'],['no','Belge no'],['tur','Belge türü']],e.imalatci,'Arşivde imalatçı belgesi yok.')+
+  T('7- Tedarikçi bilgileri (dönem başına en yüksek 10 alım)',[['donem','Dönem'],['_d','Durum'],['n','Satır sayısı',1]],e.tedarikci.map(x=>({donem:x.donem,_d:durum(x.satirlar.length),n:x.satirlar.length})),'')+'</section>';
  return h}
 /* ---------- Adım 3-8: henüz hazır değil ---------- */
 const YOK=[[3,'KDV beyanname + tahakkuk','Tablo 5 (KDV). Eski ve yeni biçimli beyanname ve tahakkuk fişleri; birden çok dönem.'],[4,'Muhtasar','Tablo 4 (çalışan sayısı).'],[5,'e-Berat','Tablo 2 (e-Defter Yevmiye/Kebir). XML veya görüntüleme PDF’i.'],[6,'Satış muavini (120)','Tablo 3 (defter kayıt tarihi, yevmiye no, ödeme şekli).'],[7,'Tedarikçi','Tablo 7. 191 muavin, indirilecek KDV listesi, e-fatura XML.'],[8,'İmalatçı, ortak, defter (elle)','Tablo 1, 2 ve 6; “imalatçı değildir” seçeneği.']];
@@ -46,7 +58,7 @@ function s9(){const p=S.pdf,a=S.ars,k=kapsam(p,a||BOS);let uy=k.uyari;if(!a)uy=u
  const sec=secim(p,a||BOS),dur={tamam:'Hazır',kismen:'Eksik veri var',eksik:'Eksik veri var'},bos=k.tablolar.some(t=>t.durum!=='tamam');
  h.push('<section><h2>e-Karşıt Excel dosyaları</h2><div class="tw"><table><thead><tr><th>Tablo</th><th class="n">Satır</th><th>Durum</th></tr></thead><tbody>'+k.tablolar.map(t=>`<tr><td>${esc(t.ad)}</td><td class="n">${sec[t.id].length}</td><td>${dur[t.durum]}</td></tr>`).join('')+'</tbody></table></div><p style="margin:10px 0 0"><button id="bIndir" class="btn">Excel dosyalarını indir (ZIP)</button></p>'+(bos?'<p class="note">Eksik veri olan tablolar, şablon biçiminde yalnızca mevcut satırlarla üretilir. Eksikleri tamamlamadan e-Karşıt’a yüklemeyin.</p>':'')+'</section>');
  return h.join('')}
-const ADIM=[{id:1,ad:'e-Karşıt PDF',r:s1,hazir:()=>!!S.pdf&&S.pdf.inv.some(i=>donemOfTarih(i.tarih))},{id:2,ad:'Arşiv',r:s2,hazir:()=>true},
+const ADIM=[{id:1,ad:'e-Karşıt PDF',r:s1,hazir:()=>!!S.pdf&&S.pdf.inv.some(i=>donemOfTarih(i.tarih))},{id:2,ad:'Arşiv',r:s2,hazir:()=>!arsUyumsuz()},
  ...YOK.map(([id,ad,not])=>({id,ad,r:yokS(id,ad,not),yok:true,hazir:()=>true})),{id:9,ad:'Kapsam ve çıktı',r:s9,hazir:()=>true}];
 const acik=n=>n===1||!!S.onay[n-1];
 /* ---------- çizim ---------- */
@@ -73,10 +85,12 @@ document.addEventListener('change',e=>{const t=e.target;if(t.id==='fPdf'||t.id==
 document.addEventListener('click',async e=>{const b=e.target;
  if(b.dataset.adim)return git(+b.dataset.adim);
  if(b.id==='bGeri')return git(S.adim-1);
+ if(b.id==='bArsKaldir'){S.ars=null;S.arsAd='';delete S.onay[2];return render()}
  if(b.id==='bIleri'){S.onay[S.adim]=true;return git(S.adim+1)}
  if(b.id==='bIndir'){b.disabled=true;const t0=b.textContent;b.textContent='Hazırlanıyor…';
   try{const files=await excelCikti(secim(S.pdf,S.ars||BOS),{vkn:S.pdf.kf.vn,tarih:new Date()}),z=zip(files.map(f=>({name:f.ad,data:f.data}))),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([z],{type:'application/zip'}));a.download=`${(S.pdf.kf.vn||'mukellef').replace(/\D/g,'')}_e-Karsit_Excel.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
   catch(err){console.error(err);msg('Excel dosyaları üretilemedi: '+esc(err.message),'er')}
   b.disabled=false;b.textContent=t0}});
 render();
+window.KD_APP={S,render};
 })();

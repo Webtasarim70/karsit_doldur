@@ -28,13 +28,17 @@ function kapsam(pdf,ars){const D=donemler(pdf),uyari=[];
  tablolar.push(T('tedarikci','7 Tedarikçi',D.fatura.length,D.fatura.filter(d=>!ars.tedarikciler.some(x=>x.donem===d)),'','arşiv / e-fatura XML'));
  const sayfa=D.yillar.filter(y=>!ars.yillar.includes(y));if(sayfa.length)uyari.push(`Arşivde ARŞİV ${sayfa.join(', ')} sayfası yok; bu yıllar yeni sayfa olarak eklenecek.`);
  return{vkn,donemler:D,arsivYillari:ars.yillar,tutar:tut,tablolar,uyari}}
-/* Excel çıktısına girecek satırlar (arşivde bulunanlar; eksikler sonraki aşamada belgelerden eklenir) */
-function secim(pdf,ars){const D=donemler(pdf);
- const defter=defterGerekli(D).map(n=>n.bul(ars)).filter(Boolean);
- const ted=[];D.fatura.forEach(d=>ted.push(...ars.tedarikciler.filter(x=>x.donem===d).sort((a,b)=>(b.matrah||0)-(a.matrah||0)).slice(0,10)));
- return{ortak:tekil(ars.ortaklar,o=>o.ad+'|'+o.vkn),defter,fatura:pdf.inv,
-  isci:D.fatura.map(d=>son(ars.isciler,x=>x.donem===d)).filter(Boolean),
-  kdv:D.kdv.map(d=>son(ars.kdv,x=>x.donem===d)).filter(Boolean),
-  imalatci:tekil(ars.imalatcilar,x=>x.ad+'|'+x.vkn+'|'+x.no),tedarikci:ted}}
-const api={kapsam,donemler,secim};if(typeof module!=='undefined')module.exports=api;else Object.assign(g,api);
+/* Arşiv eşleştirmesi: tutanağın gerektirdiği her kayıt için arşivde bulunan satır (yoksa null) */
+function arsivEslesme(pdf,ars){const D=donemler(pdf);
+ return{donemler:D,
+  ortak:tekil(ars.ortaklar,o=>o.ad+'|'+o.vkn),
+  defter:defterGerekli(D).map(n=>({ad:n.ad,satir:n.bul(ars)})),
+  isci:D.fatura.map(d=>({donem:d,satir:son(ars.isciler,x=>x.donem===d)})),
+  kdv:D.kdv.map(d=>({donem:d,satir:son(ars.kdv,x=>x.donem===d)})),
+  imalatci:tekil(ars.imalatcilar,x=>x.ad+'|'+x.vkn+'|'+x.no),
+  tedarikci:D.fatura.map(d=>({donem:d,satirlar:ars.tedarikciler.filter(x=>x.donem===d).sort((a,b)=>(b.matrah||0)-(a.matrah||0)).slice(0,10)}))}}
+/* Excel çıktısına girecek satırlar (arşivde bulunanlar; eksikler sonraki adımlarda belgelerden eklenir) */
+function secim(pdf,ars){const e=arsivEslesme(pdf,ars);
+ return{ortak:e.ortak,defter:e.defter.map(x=>x.satir).filter(Boolean),fatura:pdf.inv,isci:e.isci.map(x=>x.satir).filter(Boolean),kdv:e.kdv.map(x=>x.satir).filter(Boolean),imalatci:e.imalatci,tedarikci:e.tedarikci.flatMap(x=>x.satirlar)}}
+const api={kapsam,donemler,secim,arsivEslesme};if(typeof module!=='undefined')module.exports=api;else Object.assign(g,api);
 })(typeof window!=='undefined'?window:globalThis);

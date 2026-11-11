@@ -5,8 +5,8 @@
 
 ## Adımlar
 
-- [ ] **Adım 1 — e-Karşıt PDF** (geliştirildi, onay bekliyor): salt okunur gösterim (A, B, C, Ç, sözleşme, fatura listesi, dönemler); Ç telefon notu; 4 farklı PDF'te doğrulandı
-- [ ] **Adım 2 — Arşiv** (ilk sürüm var; adım 1 onayından sonra gözden geçirilecek)
+- [x] **Adım 1 — e-Karşıt PDF** (onaylandı): salt okunur gösterim; Ç telefon notu; 4 farklı PDF'te doğrulandı
+- [ ] **Adım 2 — Arşiv** (geliştirildi, onay bekliyor): yalnızca bu tutanağın gerektirdiği kayıtlar gösterilir, "Arşivde var/yok" durumu; VKN uyuşmazsa devam edilemez; arşivi kaldır
 - [ ] **Adım 3 — KDV beyanname + tahakkuk** (eski ve yeni biçim)
 - [ ] **Adım 4 — Muhtasar**
 - [ ] **Adım 5 — e-Berat** (XML ve görüntüleme PDF'i)
