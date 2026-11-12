@@ -6,8 +6,8 @@
 ## Adımlar
 
 - [x] **Adım 1 — e-Karşıt PDF** (onaylandı): salt okunur gösterim; Ç telefon notu; 4 farklı PDF'te doğrulandı
-- [ ] **Adım 2 — Arşiv** (geliştirildi, onay bekliyor): yalnızca bu tutanağın gerektirdiği kayıtlar gösterilir, "Arşivde var/yok" durumu; VKN uyuşmazsa devam edilemez; arşivi kaldır
-- [ ] **Adım 3 — KDV beyanname + tahakkuk** (eski ve yeni biçim)
+- [x] **Adım 2 — Arşiv** (onaylandı): yalnızca bu tutanağın gerektirdiği kayıtlar, "Arşivde var/yok"; VKN uyuşmazsa devam edilemez
+- [ ] **Adım 3 — KDV beyanname + tahakkuk** (geliştirildi, onay bekliyor): çoklu PDF yükleme, eski/yeni biçim, VKN ve dönem kontrolü, belge-arşiv farkı ve kaynak seçimi
 - [ ] **Adım 4 — Muhtasar**
 - [ ] **Adım 5 — e-Berat** (XML ve görüntüleme PDF'i)
 - [ ] **Adım 6 — Satış muavini (120)**: defter kayıt tarihi, yevmiye no, ödeme şekli

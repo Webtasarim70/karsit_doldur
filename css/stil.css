@@ -34,3 +34,5 @@ input[data-p],select[data-p]{font:inherit;color:var(--t);background:var(--bg);bo
 .x{border:0;background:none;color:var(--er);cursor:pointer;font-size:14px}td input[data-p]{min-width:84px}
 .chip.ok{border-color:var(--ok);color:var(--ok);background:var(--okb)}
 td .chip{white-space:nowrap}
+td.fark{background:var(--wrb);color:var(--wr);font-weight:600}select{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:5px;padding:3px 6px}.chip.wr{border-color:var(--wr);color:var(--wr);background:var(--wrb)}
+.kdvt th,.kdvt td{padding:4px 5px;font-size:11.5px}.kdvt td:last-child{white-space:nowrap}

@@ -112,7 +112,7 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 |---|---|---|---|
 | 1 | e-Karşıt tutanak PDF'i | A, B, C, Ç, sözleşme, 3. fatura listesi | 4 farklı PDF'te doğrulandı; salt okunur (A, B, C, Ç Excel'lere aktarılmaz). Ç telefonu PDF'te boş gelir, e-Karşıt'a her tutanakta elle girilir |
 | 2 | Arşiv `.xlsx` | 1, 2, 4, 5, 6, 7 | Yıl bazlı sayfalar; karışık sayı biçimleri. Arşiv Ç) mükellefe ait olmalı: VKN uyuşmazsa adım onaylanamaz. Arşiv isteğe bağlı |
-| 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim; her ikisi için beyanname ve tahakkuk örneği var |
+| 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim. Okuyucular ekarsit'ten alındı (`js/08_kdv.js`). Belgenin VKN'si Ç) mükellefle eşleşmeli ve dönemi gerekli dönemler içinde olmalı; aksi halde kullanılmaz. Belge değerleri arşivden farklıysa fark gösterilir, kaynak seçilir (varsayılan belge) |
 | 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
 | 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı; `berat.xslt` yalnızca görüntüleme stili |
 | 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Tahsilat satırlarından ("ÇEK ALINIŞI" vb.) ödeme şekli çıkarılacak |
@@ -127,6 +127,15 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 - Defterler firmaya göre değişir: e-Defter (GİB, berat no) veya noter tasdikli kağıt defter (Yevmiye Defteri, tasdik makamı/no).
 - Aynı belge türünün farklı biçimleri olabilir (KDV eski/yeni); okuyucular biçimi otomatik tanımalı.
 - Tek bir yüklemede farklı firmaların belgeleri karışabilir; her belgede VKN kontrol edilip tutanaktaki Ç) mükellefle eşleşmeyenler uyarılmalı.
+
+## KDV belgeleri (Adım 3) — kurallar
+
+- Belge türü başlıktan tanınır (beyanname / tahakkuk fişi); büyük-küçük harf eşleşmesi Türkçe kurallarla yapılır (JavaScript'te `/i` bayrağı İ/i'yi eşleştirmez).
+- Eski ve yeni biçimde alanlar farklı adlarla geçer (`Matrah Toplamı` / `Toplam Matrah`); yeni biçimde alan değeri etiketin ilk satırında olabilir. Yeni biçimde "Özel matrah" satırı yoksa değer 0 alınır.
+- Tahakkuk no yalnızca tahakkuk fişinden gelir (ör. `2026082201Gen0000015`, `2026082401OY90000043`); beyanname ile aynı dönemde eşleştirilir.
+- Aynı döneme birden fazla beyanname yüklenirse onay zamanı en yeni olan alınır (düzeltme beyannamesi senaryosu).
+- Excel'e yazılacak değer: belge varsa belge (arşivden farklıysa kullanıcı seçer), yoksa arşiv.
+- Birleştirilmiş ("efektif") veri: belgelerden gelen satırlar arşiv satırlarının üstüne yazılır; kapsam, Excel ve ileride arşiv güncellemesi bu veriyi kullanır.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 
