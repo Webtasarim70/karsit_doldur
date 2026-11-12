@@ -7,13 +7,14 @@
 
 - [x] **Adım 1 — e-Karşıt PDF** (onaylandı): salt okunur gösterim; Ç telefon notu; 4 farklı PDF'te doğrulandı
 - [x] **Adım 2 — Arşiv** (onaylandı): yalnızca bu tutanağın gerektirdiği kayıtlar, "Arşivde var/yok"; VKN uyuşmazsa devam edilemez
-- [ ] **Adım 3 — KDV beyanname + tahakkuk** (geliştirildi, onay bekliyor): çoklu PDF yükleme, eski/yeni biçim, VKN ve dönem kontrolü, belge-arşiv farkı ve kaynak seçimi
+- [ ] **Adım 3 — KDV** (güncellendi, onay bekliyor): belge, yüklenen KDV Excel'i veya elle giriş; okunan değerleri elle düzeltme; kaynak seçimi; Excel/elle tutarlılık uyarıları
 - [ ] **Adım 4 — Muhtasar**
 - [ ] **Adım 5 — e-Berat** (XML ve görüntüleme PDF'i)
 - [ ] **Adım 6 — Satış muavini (120)**: defter kayıt tarihi, yevmiye no, ödeme şekli
 - [ ] **Adım 7 — Tedarikçi** (191 muavin, indirilecek KDV listesi, e-fatura XML)
 - [ ] **Adım 8 — Elle girişler** (ortak, defter, imalatçı; "imalatçı değildir" seçeneği)
 - [ ] **Adım 9 — Kapsam ve çıktı**: 7 Excel + ZIP hazır (ilk sürüm); güncel arşiv çıktısı yok
+- [ ] Diğer tablolar için de Excel yükleme (Adım 4-8; `excelTani` altyapısı hazır)
 - [ ] "Uygulanamaz" tablo durumu (imalatçı değildir vb.)
 - [ ] Dolu cevap PDF'inden arşive aktarma (isteğe bağlı)
 

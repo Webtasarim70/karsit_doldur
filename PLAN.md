@@ -134,7 +134,10 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 - Eski ve yeni biçimde alanlar farklı adlarla geçer (`Matrah Toplamı` / `Toplam Matrah`); yeni biçimde alan değeri etiketin ilk satırında olabilir. Yeni biçimde "Özel matrah" satırı yoksa değer 0 alınır.
 - Tahakkuk no yalnızca tahakkuk fişinden gelir (ör. `2026082201Gen0000015`, `2026082401OY90000043`); beyanname ile aynı dönemde eşleştirilir.
 - Aynı döneme birden fazla beyanname yüklenirse onay zamanı en yeni olan alınır (düzeltme beyannamesi senaryosu).
-- Excel'e yazılacak değer: belge varsa belge (arşivden farklıysa kullanıcı seçer), yoksa arşiv.
+- Kaynaklar ve öncelik: **elle girilen > belge > yüklenen Excel > arşiv**. Kaynaklar arasında fark varsa sarı hücrelerle gösterilir ve kullanıcı kaynağı seçer (varsayılan en öncelikli). Hiçbir kaynak sessizce ezilmez.
+- **Elle düzeltme / giriş:** her dönem kartında "Değerleri düzenle" (okunan değerlerle dolu form) veya "Elle gir" (boş form). Hatalı sayıda yazılanlar korunur. Elle girilen satır "Elle" kaynağı olur, silinebilir.
+- **Tutarlılık uyarıları:** Toplam KDV ≠ hesaplanan + ilave KDV; tahakkuk no boş. (Ödenecek/devreden arasındaki ilişki iade ve mahsup nedeniyle sabit olmadığından denetlenmez.)
+- **Excel yükleme (`js/09_excel_oku.js`):** başlık satırı 7 e-Karşıt şablonuyla karşılaştırılır (`excelTani`). Reddedilir: şablonla eşleşmeyen dosya, başka tabloya ait dosya (hangisi olduğu söylenir), dosya adındaki VKN Ç) mükellefle eşleşmiyorsa, veri satırı yoksa, hiçbir satır gerekli dönemlere ait değilse. Uyarıyla kabul edilir: dosya adında VKN yok (doğrulanamadı), yinelenen dönem (sonuncusu), gerekli dönemler dışındaki satırlar, sayı olmayan/boş hücreler (0 alınır), boş tahakkuk no, dönem biçimi bozuk satırlar. Dosyada olmayan gerekli dönemler bilgi olarak belirtilir.
 - Birleştirilmiş ("efektif") veri: belgelerden gelen satırlar arşiv satırlarının üstüne yazılır; kapsam, Excel ve ileride arşiv güncellemesi bu veriyi kullanır.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
