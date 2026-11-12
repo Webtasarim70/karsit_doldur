@@ -140,6 +140,17 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 - **Excel yükleme (`js/09_excel_oku.js`):** başlık satırı 7 e-Karşıt şablonuyla karşılaştırılır (`excelTani`). Reddedilir: şablonla eşleşmeyen dosya, başka tabloya ait dosya (hangisi olduğu söylenir), dosya adındaki VKN Ç) mükellefle eşleşmiyorsa, veri satırı yoksa, hiçbir satır gerekli dönemlere ait değilse. Uyarıyla kabul edilir: dosya adında VKN yok (doğrulanamadı), yinelenen dönem (sonuncusu), gerekli dönemler dışındaki satırlar, sayı olmayan/boş hücreler (0 alınır), boş tahakkuk no, dönem biçimi bozuk satırlar. Dosyada olmayan gerekli dönemler bilgi olarak belirtilir.
 - Birleştirilmiş ("efektif") veri: belgelerden gelen satırlar arşiv satırlarının üstüne yazılır; kapsam, Excel ve ileride arşiv güncellemesi bu veriyi kullanır.
 
+## Kaynaklı adımlar altyapısı (Adım 3 ve sonrası)
+
+Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`): belge PDF'leri (çoklu), daha önce hazırlanmış e-Karşıt Excel'i (`tabloExcelOku`, `js/09_excel_oku.js`), elle giriş/düzeltme, arşiv. Kaynak önceliği elle > belge > Excel > arşiv; kaynaklar farklıysa sarı hücreler ve kaynak seçimi. Yeni adım eklemek için: `SPEC` (Excel sütunları), `CFG` (anahtarlar, sütunlar, belge okuyucu, kontrol) tanımlamak yeterlidir. Dosya adları: `01-09` yardımcılar/okuyucular, `90_arayuz.js` arayüz (yeni modüller 10-89 arasına eklenir).
+
+## Muhtasar (Adım 4) — kurallar
+
+- Belge: "Muhtasar ve Prim Hizmet Beyannamesi" (okuyucu ekarsit'ten, `js/11_muhtasar.js`). Çalışan işçi sayısı = "Çalışan Bilgisi" satırlarındaki Toplam Çalışan Sayısı toplamı; vergi dairesi yalnızca ad (örn. KARAMAN). Şablonun örnek satırı (`07.2026 / 76 / KARAMAN`) örnek belgeyle birebir uyuşur.
+- Yalnızca fatura dönemleri gerekir (önceki dönem değil).
+- Aylık beyannamede tek dönem; **3 aylık beyannamede** satır etiketindeki "N. Ay" ile ay bazında toplanır (bu biçim için örnek belge yok; kullanıcıya doğrulama uyarısı gösterilir).
+- Uyarılar: belge Ç) mükellefe ait değil / dönemi dışında / muhtasar değil / satırlar okunamadı; beyannamenin vergi dairesi Ç) vergi dairesinin ilk kelimesini içermiyorsa; sayı 0 veya vergi dairesi boş; elle girişte negatif/tam sayı olmayan değer.
+
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 
 - **Arşiv, Ç) mükellefe aittir.** Örnek arşivin VKN'si yeni PDF'teki Ç) VKN'siyle eşleşti; eski PDF'te eşleşmeyince uyarı üretildi.

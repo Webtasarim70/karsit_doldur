@@ -7,8 +7,8 @@
 
 - [x] **Adım 1 — e-Karşıt PDF** (onaylandı): salt okunur gösterim; Ç telefon notu; 4 farklı PDF'te doğrulandı
 - [x] **Adım 2 — Arşiv** (onaylandı): yalnızca bu tutanağın gerektirdiği kayıtlar, "Arşivde var/yok"; VKN uyuşmazsa devam edilemez
-- [ ] **Adım 3 — KDV** (güncellendi, onay bekliyor): belge, yüklenen KDV Excel'i veya elle giriş; okunan değerleri elle düzeltme; kaynak seçimi; Excel/elle tutarlılık uyarıları
-- [ ] **Adım 4 — Muhtasar**
+- [x] **Adım 3 — KDV** (onaylandı): belge, yüklenen KDV Excel'i veya elle giriş; okunan değerleri elle düzeltme; kaynak seçimi; uyarılar
+- [ ] **Adım 4 — Muhtasar** (geliştirildi, onay bekliyor): beyanname PDF (çoklu), yüklenen Excel, elle giriş/düzeltme; aynı kaynaklı adım altyapısı
 - [ ] **Adım 5 — e-Berat** (XML ve görüntüleme PDF'i)
 - [ ] **Adım 6 — Satış muavini (120)**: defter kayıt tarihi, yevmiye no, ödeme şekli
 - [ ] **Adım 7 — Tedarikçi** (191 muavin, indirilecek KDV listesi, e-fatura XML)
