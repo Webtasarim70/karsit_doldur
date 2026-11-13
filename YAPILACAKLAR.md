@@ -9,8 +9,8 @@
 - [x] **Adım 2 — Arşiv** (onaylandı): yalnızca bu tutanağın gerektirdiği kayıtlar, "Arşivde var/yok"; VKN uyuşmazsa devam edilemez
 - [x] **Adım 3 — KDV** (onaylandı): belge, yüklenen KDV Excel'i veya elle giriş; okunan değerleri elle düzeltme; kaynak seçimi; uyarılar
 - [x] **Adım 4 — Muhtasar** (onaylandı): beyanname PDF (çoklu), yüklenen Excel, elle giriş/düzeltme
-- [ ] **Adım 5 — e-Berat ve yasal defterler** (geliştirildi, onay bekliyor): e-Berat XML/PDF, yüklenen Excel, elle giriş (Envanter dahil), "berat süresi dolmadı" seçeneği
-- [ ] **Adım 6 — Satış muavini (120)**: defter kayıt tarihi, yevmiye no, ödeme şekli
+- [x] **Adım 5 — e-Berat ve yasal defterler** (onaylandı): e-Berat XML/PDF, yüklenen Excel, elle giriş (Envanter dahil), "berat süresi dolmadı"
+- [ ] **Adım 6 — Satış muavini (120)** (geliştirildi, onay bekliyor): fatura eşleştirme, defter kayıt tarihi, yevmiye no, tahsilatlardan ödeme şekli önerisi (FIFO), yüklenen Excel, elle düzenleme
 - [ ] **Adım 7 — Tedarikçi** (191 muavin, indirilecek KDV listesi, e-fatura XML)
 - [ ] **Adım 8 — Elle girişler** (ortak, imalatçı; "imalatçı değildir" seçeneği)
 - [ ] **Adım 9 — Kapsam ve çıktı**: 7 Excel + ZIP hazır (ilk sürüm); güncel arşiv çıktısı yok

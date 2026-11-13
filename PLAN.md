@@ -115,7 +115,7 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 | 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim. Okuyucular ekarsit'ten alındı (`js/08_kdv.js`). Belgenin VKN'si Ç) mükellefle eşleşmeli ve dönemi gerekli dönemler içinde olmalı; aksi halde kullanılmaz. Belge değerleri arşivden farklıysa fark gösterilir, kaynak seçilir (varsayılan belge) |
 | 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
 | 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı (ETTN Açıklama alanına yazılır); Envanter Defteri arşiv/Excel/elle. `berat.xslt` yalnızca görüntüleme stili |
-| 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Tahsilat satırlarından ("ÇEK ALINIŞI" vb.) ödeme şekli çıkarılacak |
+| 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Fatura no ile eşleşir; ödeme şekli tahsilatlardan FIFO ile önerilir (aşağıya bakın) |
 | 7 | 191 muavin (`.xlsx`), indirilecek KDV listesi (`.xls`), e-fatura XML/PDF | 7 Tedarikçi | Dönem başına en yüksek 10 alım |
 | 8 | Elle girişler | 1, 6 | "İmalatçı değildir" gibi seçenekler |
 | 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
@@ -158,6 +158,15 @@ Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`
 - **Aylık berat gerekir:** başlangıç ve bitiş dönemi aynı ay olmalı; çok aylı berat kullanılamaz.
 - **Süre kuralı (ekarsit ile aynı, "temel kural"):** ilgili ayı izleyen ikinci ayın son günü. Süre dolmamışsa kartta "Berat süresi dolmadı (yüklenmedi) olarak işaretle" seçeneği standart açıklama metniyle satır üretir (tarih ve no boş). Resmî süre uzatımları ayrıca geçerli olabilir; uyarı metninde belirtilir.
 - **Uyarılar:** ETTN eksik; tasdik/berat no veya tarih boş; belge Ç) mükellefe ait değil / tanınmadı / çok aylı; Excel'de tanınmayan defter türü; elle girişte nev'i-dönem anahtarla uyuşmazlığı.
+
+## Satış muavini ve fatura bilgileri (Adım 6) — kurallar
+
+- **Muavin** (120 Alıcılar PDF): `js/13_muavin.js`; satır okuyucusu ekarsit'ten (`parseMuavinPdfText`). Bir PDF'te birden fazla hesap olabilir (`HESAP KODU ADI : 120.xx / ÜNVAN`); devir = "NAKLEDİLEN TOPLAM" borç − alacak.
+- **Eşleştirme:** fatura numarası, muavin açıklamasında aranır (harf/rakam dışı karakterler yok sayılır, en az 4 karakter). **Defter kayıt tarihi** = muavin satırı tarihi, **yevmiye no** = muavin YEV.NO. Borç tutarı fatura matrah+KDV ile karşılaştırılır (fark, birden fazla eşleşme ve bulunamayan fatura uyarı olur).
+- **Ödeme şekli referansı** (e-Karşıt şablonu): 1 Nakit, 2 Banka, 3 Çek, 4 Senet, 5 **C/H (cari hesap = ödenmemiş)**, 6 Diğer. Çıktıda birden fazla ise kod sırasıyla virgülle birleştirilir (`Banka, C/H`).
+- **Öneri (FIFO):** tahsilat (alacak) satırları, en eski açık borçtan başlayarak borç satırlarına dağıtılır; devir bakiyesi ilk açık borçtur. Yöntem açıklamadan çıkarılır: ÇEK → Çek, SENET → Senet, NAKİT/KASA → Nakit, BANKA/HAVALE/EFT/VİRMAN/KREDİ KARTI/POS → Banka, diğerleri → Diğer ("belirsiz" uyarısı). Faturanın ödenmemiş kalan kısmı varsa "C/H" eklenir. Bu bir çıkarımdır: tahsilatın hangi faturaya ait olduğu muavinde yazmaz; ekranda dağıtım ayrıntısı gösterilir ve kullanıcı düzeltebilir.
+- **Alan başına kaynak önceliği:** elle > muavin > yüklenen Excel > tutanak PDF'i. Kaynaklar farklıysa uyarı.
+- **Excel yükleme (faturalar tablosu):** fatura numarasına göre eşleşir. Reddedilir: yanlış tablo, dosya adındaki VKN farklı. Uyarı: VKN doğrulanamadı, tutanakta olmayan fatura, bulunmayan fatura, tutar farkı, boş kayıt tarihi/yevmiye no/ödeme şekli, referans dışı ödeme değeri, yinelenen fatura no.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 
