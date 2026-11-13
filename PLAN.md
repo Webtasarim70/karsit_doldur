@@ -114,10 +114,10 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 | 2 | Arşiv `.xlsx` | 1, 2, 4, 5, 6, 7 | Yıl bazlı sayfalar; karışık sayı biçimleri. Arşiv Ç) mükellefe ait olmalı: VKN uyuşmazsa adım onaylanamaz. Arşiv isteğe bağlı |
 | 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim. Okuyucular ekarsit'ten alındı (`js/08_kdv.js`). Belgenin VKN'si Ç) mükellefle eşleşmeli ve dönemi gerekli dönemler içinde olmalı; aksi halde kullanılmaz. Belge değerleri arşivden farklıysa fark gösterilir, kaynak seçilir (varsayılan belge) |
 | 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
-| 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı; `berat.xslt` yalnızca görüntüleme stili |
+| 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı (ETTN Açıklama alanına yazılır); Envanter Defteri arşiv/Excel/elle. `berat.xslt` yalnızca görüntüleme stili |
 | 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Tahsilat satırlarından ("ÇEK ALINIŞI" vb.) ödeme şekli çıkarılacak |
 | 7 | 191 muavin (`.xlsx`), indirilecek KDV listesi (`.xls`), e-fatura XML/PDF | 7 Tedarikçi | Dönem başına en yüksek 10 alım |
-| 8 | Elle girişler | 1, 2, 6 | "İmalatçı değildir" gibi seçenekler |
+| 8 | Elle girişler | 1, 6 | "İmalatçı değildir" gibi seçenekler |
 | 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
 
 **Referans:** "Karşıt İnceleme Tutanağı Cevabı.PDF", yüklemeden sonra e-Karşıt'ın tabloları nasıl gösterdiğini içerir (1-7. tablolar dolu). Çıktıyı doğrulamak için ve ileride "dolu cevap PDF'inden arşive aktarma" için kaynak olabilir.
@@ -150,6 +150,14 @@ Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`
 - Yalnızca fatura dönemleri gerekir (önceki dönem değil).
 - Aylık beyannamede tek dönem; **3 aylık beyannamede** satır etiketindeki "N. Ay" ile ay bazında toplanır (bu biçim için örnek belge yok; kullanıcıya doğrulama uyarısı gösterilir).
 - Uyarılar: belge Ç) mükellefe ait değil / dönemi dışında / muhtasar değil / satırlar okunamadı; beyannamenin vergi dairesi Ç) vergi dairesinin ilk kelimesini içermiyorsa; sayı 0 veya vergi dairesi boş; elle girişte negatif/tam sayı olmayan değer.
+
+## e-Berat ve yasal defterler (Adım 5) — kurallar
+
+- **Anahtarlar:** her fatura ayı için `Yevmiye AA.YYYY` ve `Kebir AA.YYYY`, her fatura yılı için `Envanter YYYY`. Excel/arşiv satırları nev'i ve dönemden bu anahtara çevrilir (`KD.defterAnahtar`).
+- **e-Berat XML** (`entriesType`, `periodCoveredStart/End`, `creationDate`, `uniqueID` = tekil no ve ETTN) ve **e-Belge Görüntüleme PDF'i** okunur (PDF okuyucusu ekarsit'ten). Satır: nev'i `e-Defter Yevmiye Defteri` / `e-Defter Defteri Kebir`, makam `GİB`, tarih = oluşturma tarihi, no = tekil no, **Açıklama = ETTN** (UUID).
+- **Aylık berat gerekir:** başlangıç ve bitiş dönemi aynı ay olmalı; çok aylı berat kullanılamaz.
+- **Süre kuralı (ekarsit ile aynı, "temel kural"):** ilgili ayı izleyen ikinci ayın son günü. Süre dolmamışsa kartta "Berat süresi dolmadı (yüklenmedi) olarak işaretle" seçeneği standart açıklama metniyle satır üretir (tarih ve no boş). Resmî süre uzatımları ayrıca geçerli olabilir; uyarı metninde belirtilir.
+- **Uyarılar:** ETTN eksik; tasdik/berat no veya tarih boş; belge Ç) mükellefe ait değil / tanınmadı / çok aylı; Excel'de tanınmayan defter türü; elle girişte nev'i-dönem anahtarla uyuşmazlığı.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 

@@ -18,6 +18,10 @@ const prevDonem=d=>{let[m,y]=d.split('.').map(Number);m--;if(!m){m=12;y--}return
 const donemKey=d=>d.slice(3)+d.slice(0,2);
 const donemSort=a=>[...a].sort((x,y)=>donemKey(x)<donemKey(y)?-1:1);
 const yilOf=d=>d.slice(3);
-const api={pad,U,parseNum,fmtTR,normTarih,donemOfTarih,normDonem,prevDonem,donemKey,donemSort,yilOf};
+/* Defter satırının anahtarı: Yevmiye/Kebir → "Yevmiye 07.2026" (başlangıç = bitiş = tek ay), Envanter → "Envanter 2026"; diğerleri null */
+function defterAnahtar(r){const n=U(r.nevi||''),bas=normDonem(r.bas),bit=normDonem(r.bit);
+ if(/ENVANTER/.test(n))return bas?'Envanter '+bas.slice(3):null;
+ const t=/YEVM/.test(n)?'Yevmiye':/KEB[İI]R/.test(n)?'Kebir':null;return t&&bas&&bas===bit?`${t} ${bas}`:null}
+const api={defterAnahtar,pad,U,parseNum,fmtTR,normTarih,donemOfTarih,normDonem,prevDonem,donemKey,donemSort,yilOf};
 if(typeof module!=='undefined')module.exports=api;else Object.assign(g,{KD:api});
 })(typeof window!=='undefined'?window:globalThis);

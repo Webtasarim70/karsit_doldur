@@ -40,5 +40,5 @@ function arsivEslesme(pdf,ars){const D=donemler(pdf);
 /* Excel çıktısına girecek satırlar (arşivde bulunanlar; eksikler sonraki adımlarda belgelerden eklenir) */
 function secim(pdf,ars){const e=arsivEslesme(pdf,ars);
  return{ortak:e.ortak,defter:e.defter.map(x=>x.satir).filter(Boolean),fatura:pdf.inv,isci:e.isci.map(x=>x.satir).filter(Boolean),kdv:e.kdv.map(x=>x.satir).filter(Boolean),imalatci:e.imalatci,tedarikci:e.tedarikci.flatMap(x=>x.satirlar)}}
-const api={kapsam,donemler,secim,arsivEslesme};if(typeof module!=='undefined')module.exports=api;else Object.assign(g,api);
+const api={kapsam,donemler,secim,arsivEslesme,defterGerekli};if(typeof module!=='undefined')module.exports=api;else Object.assign(g,api);
 })(typeof window!=='undefined'?window:globalThis);
