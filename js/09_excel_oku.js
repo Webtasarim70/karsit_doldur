@@ -4,7 +4,7 @@
 (function(g){
 const N=typeof module!=='undefined';
 const K=N?require('./01_ortak.js'):g.KD,TPL=N?require('./05_sablonlar.js'):g.TPL_XLSX,EJ=N?require('exceljs'):g.ExcelJS;
-const {U,parseNum,normDonem,normTarih,defterAnahtar}=K;
+const {U,parseNum,normDonem,normTarih,defterAnahtar,donemOfTarih}=K;
 const AD={ortak:'1- Ortaklık',defter:'2- Yasal defter',fatura:'3- Faturalar',isci:'4- Muhtasar çalışan',kdv:'5- KDV',imalatci:'6- İmalatçı',tedarikci:'7- Tedarikçi'};
 const norm=s=>U(String(s??'')).replace(/İ/g,'I').replace(/[^A-Z0-9]/g,'');
 const u8=b=>N?new Uint8Array(Buffer.from(b,'base64')):Uint8Array.from(atob(b),c=>c.charCodeAt(0));
@@ -87,6 +87,36 @@ async function faturaExcelOku(wb,opt){const U_=[],er=t=>U_.push({k:'er',t}),wr=t
  if(bosDk)wr(`${bosDk} faturada defter kayıt tarihi boş.`);if(bosYev)wr(`${bosYev} faturada yevmiye no boş.`);if(bosOd)wr(`${bosOd} faturada ödeme şekli boş.`);
  if(gecersizOd.size)wr(`Ödeme şekli referans listesinde olmayan değerler: ${[...gecersizOd].join(', ')} (geçerli: ${REF_ODEME.join(', ')}).`);
  return{ok:true,map,uyari:U_,satir:Object.keys(map).length}}
+/* Tedarikçi tablosu (7): satırlar fatura numarasına göre okunur; dönem fatura tarihinden. opt: {dosya, vkn, donemler} */
+async function tedarikExcelOku(wb,opt){const U_=[],er=t=>U_.push({k:'er',t}),wr=t=>U_.push({k:'wr',t}),inf=t=>U_.push({k:'in',t}),RED=()=>({ok:false,satirlar:[],uyari:U_});
+ const ws=wb.worksheets[0];if(!ws){er('Dosyada sayfa bulunamadı.');return RED()}
+ const tani=await excelTani(wb);
+ if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${AD.tedarikci}” Excel dosyasını seçin.`);return RED()}
+ if(tani.id!=='tedarikci'){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu adımda “${AD.tedarikci}” tablosu bekleniyor.`);return RED()}
+ const m=/^(\d{10,11})_/.exec(opt.dosya||'');
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
+ const out=[],gorulen={},say={};let dis=0,eksik=0,sayiDegil=0,noYok=0,tarihBozuk=0;const t_=v=>String(v??'').trim();
+ for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,10);if(a.every(v=>v===''||v==null))continue;
+  const o={kaynak:'excel',ad:t_(a[0]),vkn:t_(a[1]).replace(/\.0$/,''),vd:t_(a[2]),tarih:normTarih(a[3]),seri:t_(a[4]),no:t_(a[5]),matrah:parseNum(a[6]),kdv:parseNum(a[7]),gumTarih:t_(a[8]),gumNo:t_(a[9])};
+  if(!o.no){noYok++;continue}
+  if(!/^\d{2}\.\d{2}\.\d{4}$/.test(o.tarih)){tarihBozuk++;continue}
+  if((a[6]!==''&&a[6]!=null&&o.matrah==null)||(a[7]!==''&&a[7]!=null&&o.kdv==null))sayiDegil++;
+  if(!o.ad||!o.vkn||!o.vd||o.matrah==null||o.kdv==null)eksik++;
+  const k=U(o.no).replace(/[^A-Z0-9]/g,'');if(gorulen[k])wr(`${o.no} numaralı fatura dosyada birden fazla kez var; sonuncusu kullanılacak.`);gorulen[k]=1;
+  o.donem=donemOfTarih(o.tarih);
+  if(opt.donemler&&!opt.donemler.includes(o.donem)){dis++;continue}
+  say[o.donem]=(say[o.donem]||0)+1;out.push(o)}
+ if(noYok)wr(`${noYok} satırda fatura numarası boş olduğu için atlandı.`);
+ if(tarihBozuk)wr(`${tarihBozuk} satırın fatura tarihi “gg.aa.yyyy” biçiminde olmadığı için atlandı.`);
+ if(dis)wr(`${dis} satır bu tutanağın fatura dönemleri dışında olduğu için kullanılmayacak.`);
+ if(sayiDegil)wr(`${sayiDegil} satırda matrah/KDV sayı olarak okunamadı.`);
+ if(eksik)wr(`${eksik} satırda zorunlu alanlardan (ünvan, VKN, vergi dairesi, matrah, KDV) biri boş.`);
+ Object.keys(say).forEach(d=>{if(say[d]>10)wr(`${d} döneminde ${say[d]} satır var; e-Karşıt belge bazında en yüksek 10 alımı ister.`)});
+ if(!out.length&&!dis&&!tarihBozuk&&!noYok){er('Dosyada veri satırı bulunamadı.');return RED()}
+ if(!out.length){er('Dosyadaki hiçbir satır bu tutanağın fatura dönemlerine ait değil.');return RED()}
+ if(opt.donemler){const yok=opt.donemler.filter(d=>!say[d]);if(yok.length)inf(`Dosyada satırı bulunmayan fatura dönemleri: ${yok.join(', ')}.`)}
+ return{ok:true,satirlar:out,uyari:U_}}
 const kdvExcelOku=(wb,o)=>tabloExcelOku(wb,'kdv',{dosya:o.dosya,vkn:o.vkn,anahtarlar:o.donemler});
-const api={excelTani,tabloExcelOku,faturaExcelOku,REF_ODEME,kdvExcelOku,TABLO_AD:AD,SPEC};if(N)module.exports=api;else Object.assign(g,api);
+const api={excelTani,tabloExcelOku,faturaExcelOku,tedarikExcelOku,REF_ODEME,kdvExcelOku,TABLO_AD:AD,SPEC};if(N)module.exports=api;else Object.assign(g,api);
 })(typeof window!=='undefined'?window:globalThis);

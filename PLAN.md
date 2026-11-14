@@ -116,7 +116,7 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 | 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
 | 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı (ETTN Açıklama alanına yazılır); Envanter Defteri arşiv/Excel/elle. `berat.xslt` yalnızca görüntüleme stili |
 | 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Fatura no ile eşleşir; ödeme şekli tahsilatlardan FIFO ile önerilir (aşağıya bakın) |
-| 7 | 191 muavin (`.xlsx`), indirilecek KDV listesi (`.xls`), e-fatura XML/PDF | 7 Tedarikçi | Dönem başına en yüksek 10 alım |
+| 7 | İndirilecek KDV listesi (`.xls`/`.xlsx`), 191 muavin (`.xlsx`), e-fatura XML | 7 Tedarikçi | Dönem başına en yüksek 10 alım (matrah); ayrıntı aşağıda |
 | 8 | Elle girişler | 1, 6 | "İmalatçı değildir" gibi seçenekler |
 | 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
 
@@ -167,6 +167,19 @@ Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`
 - **Öneri (FIFO):** tahsilat (alacak) satırları, en eski açık borçtan başlayarak borç satırlarına dağıtılır; devir bakiyesi ilk açık borçtur. Yöntem açıklamadan çıkarılır: ÇEK → Çek, SENET → Senet, NAKİT/KASA → Nakit, BANKA/HAVALE/EFT/VİRMAN/KREDİ KARTI/POS → Banka, diğerleri → Diğer ("belirsiz" uyarısı). Faturanın ödenmemiş kalan kısmı varsa "C/H" eklenir. Bu bir çıkarımdır: tahsilatın hangi faturaya ait olduğu muavinde yazmaz; ekranda dağıtım ayrıntısı gösterilir ve kullanıcı düzeltebilir.
 - **Alan başına kaynak önceliği:** elle > muavin > yüklenen Excel > tutanak PDF'i. Kaynaklar farklıysa uyarı.
 - **Excel yükleme (faturalar tablosu):** fatura numarasına göre eşleşir. Reddedilir: yanlış tablo, dosya adındaki VKN farklı. Uyarı: VKN doğrulanamadı, tutanakta olmayan fatura, bulunmayan fatura, tutar farkı, boş kayıt tarihi/yevmiye no/ödeme şekli, referans dışı ödeme değeri, yinelenen fatura no.
+
+## Tedarikçi (Adım 7) — kurallar
+
+- **Kaynaklar ve rolleri** (`js/14_tedarikci.js`, `.xls` için SheetJS `vendor/xlsx.full.min.js`):
+  - *İndirilecek KDV Listesi:* alım listesi (fatura tarihi/no, satıcı ünvanı, VKN, KDV hariç tutar, KDV, GGB tescil no). Vergi dairesi **yoktur**. Dönem, "İndirim hakkının kullanıldığı KDV dönemi" sütunundan (yoksa fatura tarihinden).
+  - *191 muavin:* yalnızca KDV tutarı (fatura bazında toplanır). Ana kaynak değil, **doğrulama**: listedeki/seçilen KDV ile karşılaştırılır. Liste yoksa yedek aday kaynağıdır (KDV'ye göre sıralanır, matrah eksik kalır).
+  - *e-fatura/e-arşiv XML (UBL-TR):* satıcı VKN, ünvan, **vergi dairesi** (`VD (İL)` biçiminde), fatura no/tarih, matrah = `TaxExclusiveAmount` (iskontolu), KDV = `TaxTotal`. Döviz cinslerinde `CalculationRate` ile TL'ye çevrilir; kur yoksa uyarı. Alıcı VKN Ç) mükellefle eşleşmezse kullanılmaz. Tevkifatlı faturada uyarı.
+  - *e-Karşıt Excel'i / arşiv:* daha önce seçilmiş satırlar.
+- **Seçim (dönem başına):** (1) yüklenen e-Karşıt Excel'i varsa satırlar olduğu gibi; (2) yoksa liste/191'den **en yüksek 10 alım** (matrah, 191'de KDV); (3) yoksa arşiv; (4) yoksa XML'ler. Elle eklenenler her zaman girer, çıkarılanlar çıkar (geri alınabilir).
+- **Alan öncelikleri:** elle > XML > Excel > liste > 191 > arşiv. **Vergi dairesi VKN bazında taşınır:** aynı VKN'nin başka kayıtta/XML'de/kullanıcı eşlemesinde bulunan vergi dairesi diğer satırlara uygulanır.
+- **Uyarılar:** eksik zorunlu alan (ünvan, VKN, vergi dairesi, tarih, no, matrah, KDV); 191'de bulunamadı / KDV farklı; döviz ve tevkifat; Excel için yanlış tablo, yanlış VKN (dosya adı), dönem dışı satır, 10'dan fazla satır, bozuk tarih/sayı.
+- **"Uygulanamaz":** tedarikçi tablosu boş üretilir ve kapsamda tamam sayılır.
+- **Varsayım (doğrulanmadı):** vergi dairesi yazımı şablon örneğine uyularak `ADI (İL)`; XML'de il adı varsa eklenir.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 

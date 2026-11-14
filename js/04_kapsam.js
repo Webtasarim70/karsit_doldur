@@ -24,8 +24,9 @@ function kapsam(pdf,ars){const D=donemler(pdf),uyari=[];
  tablolar.push(T('fatura','3 Faturalar',pdf.inv.length,fe,`${pdf.inv.length} fatura, matrah ${fmtTR(tut.matrah)}, KDV ${fmtTR(tut.kdv)}`+(fe.length?' · defter kayıt tarihi, yevmiye no ve ödeme şekli muavinden tamamlanacak':''),'PDF + muavin'));
  tablolar.push(T('isci','4 Muhtasar çalışan',D.fatura.length,D.fatura.filter(d=>!ars.isciler.some(x=>x.donem===d)),'','arşiv / muhtasar PDF'));
  tablolar.push(T('kdv','5 KDV',D.kdv.length,D.kdv.filter(d=>!ars.kdv.some(x=>x.donem===d)),'','arşiv / beyanname + tahakkuk PDF'));
- tablolar.push(T('imalatci','6 İmalatçı',1,ars.imalatcilar.length?[]:['imalatçı belgesi'],ars.imalatcilar.length?`${ars.imalatcilar.length} belge`:'','arşiv / elle'));
- tablolar.push(T('tedarikci','7 Tedarikçi',D.fatura.length,D.fatura.filter(d=>!ars.tedarikciler.some(x=>x.donem===d)),'','arşiv / e-fatura XML'));
+ const UY=ars.uygulanamaz||{};
+ tablolar.push(UY.imalatci?T('imalatci','6 İmalatçı',0,[],'Uygulanamaz (kullanıcı işaretledi)','—'):T('imalatci','6 İmalatçı',1,ars.imalatcilar.length?[]:['imalatçı belgesi'],ars.imalatcilar.length?`${ars.imalatcilar.length} belge`:'','arşiv / elle'));
+ tablolar.push(UY.tedarikci?T('tedarikci','7 Tedarikçi',0,[],'Uygulanamaz (kullanıcı işaretledi)','—'):T('tedarikci','7 Tedarikçi',D.fatura.length,D.fatura.filter(d=>!ars.tedarikciler.some(x=>x.donem===d)),'','liste / 191 muavin / e-fatura XML / arşiv'));
  const sayfa=D.yillar.filter(y=>!ars.yillar.includes(y));if(sayfa.length)uyari.push(`Arşivde ARŞİV ${sayfa.join(', ')} sayfası yok; bu yıllar yeni sayfa olarak eklenecek.`);
  return{vkn,donemler:D,arsivYillari:ars.yillar,tutar:tut,tablolar,uyari}}
 /* Arşiv eşleştirmesi: tutanağın gerektirdiği her kayıt için arşivde bulunan satır (yoksa null) */

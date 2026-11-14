@@ -9,7 +9,7 @@ const msg=(t,k)=>$('durum').innerHTML=t?`<div class="msg ${k||'in'}">${t}</div>`
 /* ---------- kaynaklı adımlar (KDV, muhtasar ...): belge, Excel, elle giriş, arşiv ---------- */
 const son=(a,f)=>{for(let i=a.length-1;i>=0;i--)if(f(a[i]))return a[i];return null};
 const KAY={elle:'Elle girilen',belge:'Belge',excel:'Excel',arsiv:'Arşiv'},ONCELIK=['elle','belge','excel','arsiv'];
-const ST=id=>S.st[id]??={B:[],X:null,El:{},Sec:{},Edit:null,Err:'',Taslak:null};
+const ST=id=>S.st[id]??=(id==='ted'?{Liste:null,M:null,Xml:[],Xl:null,El:{},Ekle:[],Cikar:{},VdMap:{},Uyg:false,Edit:null,EkleAc:null,Err:'',Taslak:null}:{B:[],X:null,El:{},Sec:{},Edit:null,Err:'',Taslak:null});
 const normT=s=>String(s||'').toLocaleUpperCase('tr-TR').replace(/İ/g,'I').replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 const CFG={
  kdv:{id:'kdv',adim:3,ad:'KDV bilgileri',tablo:'Tablo 5: Dönem bazında KDV bilgileri',arsKey:'kdv',excel:'kdv',
@@ -63,7 +63,11 @@ function durumK(cfg){const st=ST(cfg.id),vp=(S.pdf.kf.vn||'').trim(),K=cfg.anaht
  return{satir,uyari:bv.uyari}}
 function efektif(){const a=S.ars||BOS;if(!S.pdf)return a;let r=a;
  Object.values(CFG).forEach(cfg=>{const ek=durumK(cfg).satir.filter(x=>x.sec!=='arsiv'&&x.kullanilan).map(x=>({...x.kullanilan,donem:x.key}));
-  if(ek.length){const rk=cfg.rowKey||(x=>x.donem);r={...r,[cfg.arsKey]:[...r[cfg.arsKey].filter(x=>!ek.some(y=>y.donem===rk(x))),...ek]}}});return r}
+  if(ek.length){const rk=cfg.rowKey||(x=>x.donem);r={...r,[cfg.arsKey]:[...r[cfg.arsKey].filter(x=>!ek.some(y=>y.donem===rk(x))),...ek]}}});
+ const td=ST('ted'),D=donemler(S.pdf).fatura;
+ if(td.Uyg)r={...r,uygulanamaz:{...(r.uygulanamaz||{}),tedarikci:true},tedarikciler:r.tedarikciler.filter(x=>!D.includes(x.donem))};
+ else{const H=tedHesapla(),dd=D.filter(d=>H[d].mod||H[d].secili.length);if(dd.length)r={...r,tedarikciler:[...r.tedarikciler.filter(x=>!dd.includes(x.donem)),...dd.flatMap(d=>H[d].secili.map(x=>({...x.alan,donem:d})))]}}
+ return r}
 /* ---------- Adım 6: satış muavini → faturaların defter kayıt tarihi, yevmiye no ve ödeme şekli ---------- */
 const nrmNo=s=>String(s||'').toLocaleUpperCase('tr-TR').replace(/[^A-Z0-9]/g,''),ODEME=['Nakit','Banka','Çek','Senet','C/H','Diğer'];
 const FAT={id:'fatura',excel:'fatura',dosyaOku:async f=>muavinBelge(kdvMetin(await pdfItems(f))),excelOku:(wb,o)=>faturaExcelOku(wb,o)};
@@ -102,6 +106,40 @@ function s6(){const st=ST('fatura'),d=faturaDurum(),pdf=S.pdf,X=st.X;
    const kay=[...new Set([x.dk[1],x.yev[1],x.od[1]].filter(k=>k!=='yok').map(k=>SRC[k]))].join(', ')||'—';
    return `<tr><td>${esc(x.i.tarih)}</td><td>${esc(x.i.no)}</td><td class="n">${fmtTR((parseNum(x.i.matrah)||0)+(parseNum(x.i.kdv)||0))}</td><td>${esc(x.dk[0])||'—'}</td><td>${esc(x.yev[0])||'—'}</td><td>${esc(x.od[0])||'—'}${ay.length?`<div class="note" style="margin:2px 0 0;font-size:11px">${ay.map(esc).join('<br>')}</div>`:''}</td><td>${kay}</td><td>${nt.map(n=>`<span class="chip ${n[0]}" style="display:block;margin:2px 0">${esc(n[1])}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn2" data-ka="fduz:fatura:${esc(x.key)}">Düzenle</button>${x.el?` <button class="x" data-ka="felsil:fatura:${esc(x.key)}" title="Elle girişi sil">✕</button>`:''}</td></tr>`}).join('')+'</tbody></table></div>'+
   (st.Edit?faturaForm(d.satir.find(x=>x.key===st.Edit)||d.satir[0]):'')+'</section>';
+ return h}
+/* ---------- Adım 7: tedarikçi (Tablo 7) ---------- */
+const TKAY={elle:'Elle',xml:'XML',excel:'Excel',liste:'Liste',m191:'191',arsiv:'Arşiv',vkn:'VKN eşl.'};
+function tedGirdi(){const st=ST('ted'),vp=(S.pdf.kf.vn||'').trim();
+ return{liste:st.Liste&&st.Liste.ok?st.Liste.satirlar:[],m191:st.M&&st.M.ok?st.M.satirlar:[],xml:st.Xml.filter(b=>b.tur==='efatura'&&!b.hata&&(!b.aliciVkn||b.aliciVkn===vp)),excel:st.Xl&&st.Xl.ok?st.Xl.satirlar:[],arsiv:(S.ars||BOS).tedarikciler,el:st.El,ekle:st.Ekle,cikar:st.Cikar,vdMap:st.VdMap,donemler:donemler(S.pdf).fatura}}
+const tedHesapla=()=>tedarikHesapla(tedGirdi());
+function tedForm(donem,key,s){const st=ST('ted'),v=st.Taslak||(s?{...Object.fromEntries(TED_ALAN.map(f=>[f,s.alan[f]==null?'':(f==='matrah'||f==='kdv'?fmtTR(s.alan[f]):s.alan[f])]))}:{}),ET={ad:'Satıcı ünvanı',vkn:'Vergi/T.C. Kimlik No',vd:'Bağlı olduğu vergi dairesi',tarih:'Fatura tarihi (gg.aa.yyyy)',seri:'Fatura serisi',no:'Fatura numarası',matrah:'Matrah (TL)',kdv:'KDV (TL)',gumTarih:'Gümrük beyannamesi/serbest bölge form tarihi',gumNo:'Gümrük beyannamesi/serbest bölge tescil no'};
+ return `<div class="card" style="background:var(--bg)"><h3>${donem} — ${s?esc(s.alan.no)+' düzenle':'Elle satır ekle'}</h3><div class="g">${TED_ALAN.map(f=>`<label>${ET[f]}<input class="fi" data-tf="${f}" value="${esc(v[f]??'')}"${s&&f==='no'?' readonly':''}></label>`).join('')}</div>${st.Err?`<div class="msg er" style="margin-top:8px">${esc(st.Err)}</div>`:''}<p class="note">Tutarları 1.234,56 biçiminde yazın. Vergi dairesini “ÜSKÜDAR (İSTANBUL)” biçiminde yazabilirsiniz.</p><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-ka="tkaydet:ted:${esc(donem)}|${esc(key||'')}">Kaydet</button><button class="btn2" data-ka="tiptal:ted:">İptal</button></div></div>`}
+function tedOku(donem,key){const st=ST('ted'),v={};st.Taslak={};document.querySelectorAll('[data-tf]').forEach(i=>{st.Taslak[i.dataset.tf]=i.value;v[i.dataset.tf]=i.value.trim()});let h='';
+ ['matrah','kdv'].forEach(f=>{if(v[f]===''){v[f]=null}else{const n=parseNum(v[f]);if(n==null)h=`“${f==='matrah'?'Matrah':'KDV'}” alanı sayı değil: ${v[f]}`;else v[f]=n}});
+ if(!h&&v.tarih){v.tarih=normTarih(v.tarih);if(!/^\d{2}\.\d{2}\.\d{4}$/.test(v.tarih))h='Fatura tarihi gg.aa.yyyy biçiminde olmalı.'}
+ if(!h&&!key){if(!v.no)h='Fatura numarası boş olamaz.';else if(!v.tarih)h='Fatura tarihi boş olamaz.';else if(donemOfTarih(v.tarih)!==donem)h=`Fatura tarihi ${donem} dönemi içinde olmalı.`;else{const r=tedHesapla()[donem];if(r&&(r.secili.some(x=>x.key===nrmNo(v.no))||r.cikarilan.some(x=>x.key===nrmNo(v.no))))h='Bu fatura numarası listede zaten var; mevcut satırı düzenleyin.'}}
+ if(h){st.Err=h;return null}
+ v.donem=donem;return v}
+function s7(){const st=ST('ted'),vp=(S.pdf.kf.vn||'').trim(),D=donemler(S.pdf).fatura,H=tedHesapla(),m191=!!(st.M&&st.M.ok);
+ const dur=(X,ad)=>X?`<div style="margin-top:8px"><div class="chips"><span class="chip ${X.ok?'ok':'er'}">${ad}: ${esc(X.ad)} — ${X.ok?(X.satirlar.length+' satır'):'kullanılamıyor'}</span></div>${X.uyari.map(u=>`<div class="msg ${u.k==='er'?'er':u.k==='wr'?'wr':'in'}" style="margin-top:6px">${esc(u.t)}</div>`).join('')}</div>`:'';
+ const xml=st.Xml.map((b,i)=>{let du,k;if(!b.tur){du='Tanınmadı: e-Fatura/e-Arşiv XML’i değil';k='er'}else if(b.hata){du='Okunamadı: '+esc(b.hata);k='er'}else if(b.aliciVkn&&b.aliciVkn!==vp){du=`Alıcı VKN (${esc(b.aliciVkn)}) Ç) mükellefle eşleşmiyor; kullanılmayacak`;k='er'}else if(!D.includes(b.donem)){du='Bu tutanağın fatura dönemleri dışında; kullanılmayacak';k='wr'}else{du='Kullanılacak';k='ok'}
+  return `<tr><td>${esc(b.dosya)}</td><td>${esc(b.no||'—')}</td><td>${esc(b.tarih||'—')}</td><td>${esc((b.ad||'').slice(0,26))}<br>${esc(b.vkn||'—')}</td><td class="n">${b.matrah==null?'—':fmtTR(b.matrah)}</td><td class="n">${b.kdv==null?'—':fmtTR(b.kdv)}</td><td><span class="chip ${k}">${du}</span></td><td><button class="x" data-ka="xmlsil:ted:${i}" title="Kaldır">✕</button></td></tr>`}).join('');
+ let h=`<section><h2>7. Tedarikçi bilgileri</h2><p class="note" style="margin:0 0 10px">Fatura dönemlerinde (<b>${D.join(', ')}</b>) satın alınan mallar için <b>dönem başına en yüksek 10 alım</b> (matrah) gerekir. Kaynaklar: İndirilecek KDV Listesi (alım listesi, matrah ve KDV), 191 muavin (KDV doğrulaması), e-fatura XML (vergi dairesi, tek tek fatura), daha önce hazırlanmış Excel veya arşiv. Vergi dairesi listede ve muavinde yer almaz; e-fatura XML’inden veya elle girilir (aynı VKN’ye tek seferde).</p>`+
+  `<label style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="chkUyg"${st.Uyg?' checked':''} style="width:auto"> Bu firma için tedarikçi tablosu uygulanamaz (tabloyu boş üret)</label>`+
+  `<div class="up">`+drop('dL_ted','fL_ted','İndirilecek KDV Listesi (.xls / .xlsx)','.xls,.xlsx',st.Liste?st.Liste.ad:'','Alım listesi: tarih, no, satıcı, VKN, matrah, KDV','tl:ted')+drop('dM_ted','fM_ted','191 muavin (.xlsx / .xls)','.xlsx,.xls',st.M?st.M.ad:'','KDV doğrulaması için (isteğe bağlı)','tm:ted')+
+  drop('dXm_ted','fXm_ted','e-Fatura / e-Arşiv XML’leri','.xml,text/xml',st.Xml.length?`${st.Xml.length} dosya yüklendi`:'','Vergi dairesi ve fatura ayrıntıları; birden fazla dosya','tx:ted',1)+drop('dK_ted','fK_ted','e-Karşıt tedarikçi Excel’i (isteğe bağlı)','.xlsx',st.Xl?st.Xl.ad:'','Daha önce hazırlanmış “ILGILI_DONEMDE_SATILAN_MALLARIN_TEDARIK…” dosyası','tk:ted')+'</div>'+
+  dur(st.Liste,'Liste')+dur(st.M,'191 muavin')+dur(st.Xl,'Excel')+
+  (xml?`<div class="tw" style="margin-top:10px"><table><thead><tr><th>Dosya</th><th>Fatura no</th><th>Tarih</th><th>Satıcı</th><th class="n">Matrah (TL)</th><th class="n">KDV (TL)</th><th>Durum</th><th></th></tr></thead><tbody>${xml}</tbody></table></div>`:'')+'</section>';
+ if(st.Uyg)return h+'<section><div class="msg in">Tedarikçi tablosu “uygulanamaz” olarak işaretlendi; Excel çıktısı boş şablon olarak üretilir.</div></section>';
+ const vdEks=[...new Map(D.flatMap(d=>H[d].secili).filter(x=>!x.alan.vd&&x.alan.vkn).map(x=>[x.alan.vkn,x.alan.ad||'']))];
+ if(vdEks.length)h+=`<section><h2>Vergi dairesi eksik satıcılar</h2><p class="note" style="margin:0 0 8px">Aynı VKN’ye sahip tüm satırlara uygulanır. Biçim: “ÜSKÜDAR (İSTANBUL)”.</p><div class="g">${vdEks.map(([v,a])=>`<label>${esc(v)} — ${esc(a.slice(0,40))}<input class="fi" data-vd="${esc(v)}" placeholder="Vergi dairesi (İL)"></label>`).join('')}</div></section>`;
+ h+=D.map(d=>{const o=H[d];
+  const rows=o.secili.map(sl=>{const nt=satirNotlari(sl,m191),kay=[...new Set(Object.values(sl.kay))].map(k=>TKAY[k]).join(', ');
+   return `<tr><td>${esc(sl.alan.tarih||'—')}</td><td>${esc(sl.alan.no)}</td><td>${esc((sl.alan.ad||'—').slice(0,34))}</td><td>${esc(sl.alan.vkn||'—')}</td><td>${esc(sl.alan.vd||'—')}</td><td class="n">${sl.alan.matrah==null?'—':fmtTR(sl.alan.matrah)}</td><td class="n">${sl.alan.kdv==null?'—':fmtTR(sl.alan.kdv)}</td><td>${kay}</td><td>${nt.map(n=>`<span class="chip ${n[0]}" style="display:block;margin:2px 0">${esc(n[1])}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn2" data-ka="tduz:ted:${esc(d)}|${esc(sl.key)}">Düzenle</button> <button class="x" data-ka="tcikar:ted:${esc(sl.key)}" title="Listeden çıkar">✕</button></td></tr>`}).join('');
+  return `<section><h2>Tablo 7: ${d}</h2><div class="chips" style="margin-bottom:8px"><span class="chip ${o.secili.length?'ok':'er'}">Seçili alım: <b>${o.secili.length}</b></span>${o.mod?`<span class="chip">Kaynak: <b>${esc(o.mod)}</b></span>`:''}${o.toplam>10?`<span class="chip">${o.toplam} alım arasından en yüksek 10’u seçildi</span>`:''}</div>`+o.not.map(n=>`<div class="msg wr" style="margin-bottom:8px">${esc(n)}</div>`).join('')+
+   (o.secili.length?`<div class="tw"><table class="kdvt"><thead><tr><th>Fatura tarihi</th><th>Fatura no</th><th>Satıcı</th><th>VKN</th><th>Vergi dairesi</th><th class="n">Matrah</th><th class="n">KDV</th><th>Kaynak</th><th>Notlar</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="msg er">Bu dönem için tedarikçi satırı yok: liste, 191 muavin, XML veya Excel yükleyin, elle ekleyin ya da tabloyu “uygulanamaz” işaretleyin.</div>')+
+   (o.cikarilan.length?`<div class="chips" style="margin-top:8px"><span class="note" style="margin:0">Çıkarılanlar:</span>${o.cikarilan.map(c=>`<span class="chip">${esc(c.alan.no)} <button class="x" data-ka="tgeri:ted:${esc(c.key)}" title="Geri al" style="color:var(--a)">↺</button></span>`).join('')}</div>`:'')+
+   (st.Edit&&st.Edit.startsWith(d+'|')?tedForm(d,st.Edit.split('|')[1],o.secili.find(x=>x.key===st.Edit.split('|')[1])):(st.EkleAc===d?tedForm(d,'',null):`<p style="margin:8px 0 0"><button class="btn2" data-ka="tekleac:ted:${esc(d)}">+ Elle satır ekle</button></p>`))+'</section>'}).join('');
  return h}
 /* ---------- gösterim yardımcıları (Adım 1 salt okunur) ---------- */
 const dl=(o,rows)=>'<dl>'+rows.filter(r=>!r[2]||o[r[0]]).map(([k,l])=>`<dt>${l}</dt><dd>${esc(o[k])||'—'}</dd>`).join('')+'</dl>';
@@ -168,7 +206,7 @@ function kaynakli(cfg){const st=ST(cfg.id),vp=(S.pdf.kf.vn||'').trim(),K=cfg.ana
  return h}
 const s3=()=>kaynakli(CFG.kdv),s4=()=>kaynakli(CFG.isci),s5=()=>kaynakli(CFG.defter);
 /* ---------- Adım 4-8: henüz hazır değil ---------- */
-const YOK=[[7,'Tedarikçi','Tablo 7. 191 muavin, indirilecek KDV listesi, e-fatura XML.'],[8,'İmalatçı ve ortak (elle)','Tablo 1 ve 6; “imalatçı değildir” seçeneği.']];
+const YOK=[[8,'İmalatçı ve ortak (elle)','Tablo 1 ve 6; “imalatçı değildir” seçeneği.']];
 const yokS=(id,ad,not)=>()=>`<section><h2>${id}. ${ad}</h2><p>Bu adım henüz hazır değil; sıradaki geliştirmelerde eklenecek.</p><p class="note">${not}</p></section>`;
 /* ---------- Adım 9: kapsam ve çıktı ---------- */
 function s9(){const p=efPdf(),a=S.ars,ef=efektif(),k=kapsam(p,ef);let uy=k.uyari;if(!a)uy=uy.filter(u=>!u.startsWith('Arşiv'));const h=[];
@@ -179,7 +217,7 @@ function s9(){const p=efPdf(),a=S.ars,ef=efektif(),k=kapsam(p,ef);let uy=k.uyari
  const sec=secim(p,ef),dur={tamam:'Hazır',kismen:'Eksik veri var',eksik:'Eksik veri var'},bos=k.tablolar.some(t=>t.durum!=='tamam');
  h.push('<section><h2>e-Karşıt Excel dosyaları</h2><div class="tw"><table><thead><tr><th>Tablo</th><th class="n">Satır</th><th>Durum</th></tr></thead><tbody>'+k.tablolar.map(t=>`<tr><td>${esc(t.ad)}</td><td class="n">${sec[t.id].length}</td><td>${dur[t.durum]}</td></tr>`).join('')+'</tbody></table></div><p style="margin:10px 0 0"><button id="bIndir" class="btn">Excel dosyalarını indir (ZIP)</button></p>'+(bos?'<p class="note">Eksik veri olan tablolar, şablon biçiminde yalnızca mevcut satırlarla üretilir. Eksikleri tamamlamadan e-Karşıt’a yüklemeyin.</p>':'')+'</section>');
  return h.join('')}
-const ADIM=[{id:1,ad:'e-Karşıt PDF',r:s1,hazir:()=>!!S.pdf&&S.pdf.inv.some(i=>donemOfTarih(i.tarih))},{id:2,ad:'Arşiv',r:s2,hazir:()=>!arsUyumsuz()},{id:3,ad:'KDV',r:s3,hazir:()=>true},{id:4,ad:'Muhtasar',r:s4,hazir:()=>true},{id:5,ad:'e-Berat ve defterler',r:s5,hazir:()=>true},{id:6,ad:'Satış muavini',r:s6,hazir:()=>true},
+const ADIM=[{id:1,ad:'e-Karşıt PDF',r:s1,hazir:()=>!!S.pdf&&S.pdf.inv.some(i=>donemOfTarih(i.tarih))},{id:2,ad:'Arşiv',r:s2,hazir:()=>!arsUyumsuz()},{id:3,ad:'KDV',r:s3,hazir:()=>true},{id:4,ad:'Muhtasar',r:s4,hazir:()=>true},{id:5,ad:'e-Berat ve defterler',r:s5,hazir:()=>true},{id:6,ad:'Satış muavini',r:s6,hazir:()=>true},{id:7,ad:'Tedarikçi',r:s7,hazir:()=>true},
  ...YOK.map(([id,ad,not])=>({id,ad,r:yokS(id,ad,not),yok:true,hazir:()=>true})),{id:9,ad:'Kapsam ve çıktı',r:s9,hazir:()=>true}];
 const acik=n=>n===1||!!S.onay[n-1];
 /* ---------- çizim ---------- */
@@ -198,6 +236,7 @@ const hataMetni=e=>/central directory|zip/i.test(e.message)?'Bu dosya geçerli b
 /* tur: 'pdf' | 'ars' | 'kb:<adım>' (belgeler, çoklu) | 'kx:<adım>' (e-Karşıt Excel) */
 async function yukle(tur,file){if(!file)return;
  const[t,id]=tur.split(':');
+ if(['tl','tm','tx','tk'].includes(t))return yukleTed(t,[].concat(file));
  if(t==='kb'){const cfg=id==='fatura'?FAT:CFG[id],st=ST(id),L=[].concat(file);msg(`${L.length} belge okunuyor…`);
   for(const f of L){try{const b=cfg.dosyaOku?await cfg.dosyaOku(f):cfg.okuyucu(await pdfItems(f));const x={ad:f.name,tur:null,...(b||{})};st.B=st.B.filter(y=>!(y.ad===x.ad&&y.donem===x.donem));st.B.push(x)}catch(e){console.error(e);st.B.push({ad:f.name,tur:null})}}
   msg('');return render()}
@@ -211,6 +250,17 @@ async function yukle(tur,file){if(!file)return;
   msg('')}
  catch(e){console.error(e);msg(esc(hataMetni(e)),'er')}
  render()}
+/* tablo dosyası (xls: SheetJS, xlsx: ExcelJS) → satır dizisi; tarihler xls'te seri numarası, xlsx'te Date olabilir */
+async function tabloSatirlari(file){const buf=await file.arrayBuffer();
+ if(/\.xls$/i.test(file.name)){const wb=XLSX.read(new Uint8Array(buf),{type:'array'});return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''})}
+ const wb=new ExcelJS.Workbook();await wb.xlsx.load(buf);const ws=wb.worksheets[0],R=[];ws.eachRow({includeEmpty:true},(row,n)=>{const a=[];for(let c=1;c<=Math.max(ws.columnCount,12);c++){let v=row.getCell(c).value;if(v&&typeof v==='object'&&!(v instanceof Date)){v=v.richText?v.richText.map(t=>t.text).join(''):('result' in v?v.result:(v.text??''))}a.push(v==null?'':v)}R[n-1]=a});return Array.from(R,r=>r||[])}
+async function yukleTed(t,L){const st=ST('ted'),vp=(S.pdf.kf.vn||'').trim();msg(`${L.length} dosya okunuyor…`);
+ try{if(t==='tl'){const f=L[0];st.Liste={ad:f.name,...kdvListesiOku(await tabloSatirlari(f))}}
+  else if(t==='tm'){const f=L[0];st.M={ad:f.name,...muavin191Oku(await tabloSatirlari(f))}}
+  else if(t==='tx'){for(const f of L){let b=null;try{b=efaturaXml(await f.text())}catch(e){console.error(e)}const x={dosya:f.name,tur:null,...(b||{})};st.Xml=st.Xml.filter(y=>y.dosya!==x.dosya);st.Xml.push(x)}}
+  else if(t==='tk'){const f=L[0],wb=new ExcelJS.Workbook();await wb.xlsx.load(await f.arrayBuffer());st.Xl={ad:f.name,...await tedarikExcelOku(wb,{dosya:f.name,vkn:vp,donemler:donemler(S.pdf).fatura})}}}
+ catch(e){console.error(e);const u=[{k:'er',t:hataMetni(e)}],x={ad:L[0].name,ok:false,satirlar:[],uyari:u};if(t==='tl')st.Liste=x;else if(t==='tm')st.M=x;else if(t==='tk')st.Xl=x}
+ msg('');render()}
 /* elle girişte okunan değerleri doğrular: sayı (n), tam sayı (i), metin (t) */
 function elleOku(cfg,key){const st=ST(cfg.id),v={donem:key,kaynak:'elle'};let hata='';st.Taslak={};
  document.querySelectorAll('[data-kf]').forEach(i=>{const k=i.dataset.kf,c=cfg.kolon.find(x=>x[0]===k),t=i.value.trim();st.Taslak[k]=i.value;
@@ -221,9 +271,12 @@ function elleOku(cfg,key){const st=ST(cfg.id),v={donem:key,kaynak:'elle'};let ha
 /* ---------- olaylar (kök üzerinde) ---------- */
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='fPdf'||t.id==='fArs'){yukle(t.id==='fPdf'?'pdf':'ars',t.files[0]);t.value=''}
  if(t.id&&t.id.startsWith('fB_')){yukle('kb:'+t.id.slice(3),[...t.files]);t.value=''}
+ {const m=/^f(L|M|Xm|K)_ted$/.exec(t.id||'');if(m){yukle({L:'tl',M:'tm',Xm:'tx',K:'tk'}[m[1]]+':ted',m[1]==='Xm'?[...t.files]:t.files[0]);t.value=''}}
+ if(t.id==='chkUyg'){ST('ted').Uyg=t.checked;render()}
+ if(t.dataset&&t.dataset.vd){const v=t.value.trim(),st=ST('ted');if(v)st.VdMap[t.dataset.vd]=v;else delete st.VdMap[t.dataset.vd];render()}
  if(t.id&&t.id.startsWith('fX_')){yukle('kx:'+t.id.slice(3),t.files[0]);t.value=''}
  if(t.dataset&&t.dataset.ksec){const[id,key]=t.dataset.ksec.split(':');ST(id).Sec[key]=t.value;render()}});
-['dragover','dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{const d=e.target.closest&&e.target.closest('.drop');if(!d)return;e.preventDefault();d.classList.toggle('on',n==='dragover');if(n==='drop')yukle(d.dataset.tur,d.dataset.tur.startsWith('kb:')?[...e.dataTransfer.files]:e.dataTransfer.files[0])}));
+['dragover','dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{const d=e.target.closest&&e.target.closest('.drop');if(!d)return;e.preventDefault();d.classList.toggle('on',n==='dragover');if(n==='drop')yukle(d.dataset.tur,(d.dataset.tur.startsWith('kb:')||d.dataset.tur.startsWith('tx:'))?[...e.dataTransfer.files]:e.dataTransfer.files[0])}));
 document.addEventListener('click',async e=>{const b=e.target;
  if(b.dataset.adim)return git(+b.dataset.adim);
  if(b.dataset.ka){const[op,id,key]=b.dataset.ka.split(':'),st=ST(id),cfg=CFG[id];
@@ -233,6 +286,13 @@ document.addEventListener('click',async e=>{const b=e.target;
   else if(op==='iptal'){st.Edit=null;st.Err='';st.Taslak=null}
   else if(op==='elsil'){delete st.El[key];delete st.Sec[key]}
   else if(op==='ozel'){st.El[key]=cfg.ozel(key);st.Sec[key]='elle'}
+  else if(op==='xmlsil'){st.Xml.splice(+key,1)}
+  else if(op==='tduz'){st.Edit=key;st.EkleAc=null;st.Err='';st.Taslak=null}
+  else if(op==='tekleac'){st.EkleAc=key;st.Edit=null;st.Err='';st.Taslak=null}
+  else if(op==='tiptal'){st.Edit=null;st.EkleAc=null;st.Err='';st.Taslak=null}
+  else if(op==='tcikar'){st.Cikar[key]=true}
+  else if(op==='tgeri'){delete st.Cikar[key]}
+  else if(op==='tkaydet'){const[dn,k]=key.split('|'),v=tedOku(dn,k);if(v){if(k){const o={};TED_ALAN.forEach(f=>{if(f!=='no'&&v[f]!=null&&v[f]!=='')o[f]=v[f]});st.El[k]=o}else{st.Ekle.push(v);delete st.Cikar[nrmNo(v.no)]}st.Edit=null;st.EkleAc=null;st.Err='';st.Taslak=null}}
   else if(op==='fduz'){st.Edit=key;st.Err='';st.Taslak=null}
   else if(op==='fiptal'){st.Edit=null;st.Err='';st.Taslak=null}
   else if(op==='felsil'){delete st.El[key]}
