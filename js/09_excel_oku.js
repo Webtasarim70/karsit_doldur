@@ -117,6 +117,30 @@ async function tedarikExcelOku(wb,opt){const U_=[],er=t=>U_.push({k:'er',t}),wr=
  if(!out.length){er('Dosyadaki hiçbir satır bu tutanağın fatura dönemlerine ait değil.');return RED()}
  if(opt.donemler){const yok=opt.donemler.filter(d=>!say[d]);if(yok.length)inf(`Dosyada satırı bulunmayan fatura dönemleri: ${yok.join(', ')}.`)}
  return{ok:true,satirlar:out,uyari:U_}}
+/* Ortaklık (1) ve İmalatçı (6) tabloları: satır listesi. opt: {dosya, vkn} → {ok, satirlar, uyari} */
+const LISTE_SPEC={
+ ortak:{ad:AD.ortak,kolon:['ad','vkn','il','vd','pay','aciklama'],zorunlu:['ad','vkn','il','vd','pay'],etiket:{ad:'ünvan',vkn:'VKN',il:'il',vd:'vergi dairesi',pay:'pay oranı'}},
+ imalatci:{ad:AD.imalatci,kolon:['ad','vkn','oda','tarih','no','tur','aciklama'],zorunlu:['ad','vkn','oda','tarih','no','tur'],etiket:{ad:'ünvan',vkn:'VKN',oda:'sanayi odası',tarih:'belge tarihi',no:'belge no',tur:'belge türü'}}};
+async function listeExcelOku(wb,id,opt){const sp=LISTE_SPEC[id],U_=[],er=t=>U_.push({k:'er',t}),wr=t=>U_.push({k:'wr',t}),RED=()=>({ok:false,satirlar:[],uyari:U_});
+ const ws=wb.worksheets[0];if(!ws){er('Dosyada sayfa bulunamadı.');return RED()}
+ const tani=await excelTani(wb);
+ if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${sp.ad}” Excel dosyasını seçin.`);return RED()}
+ if(tani.id!==id){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu bölümde “${sp.ad}” tablosu bekleniyor.`);return RED()}
+ const m=/^(\d{10,11})_/.exec(opt.dosya||'');
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
+ const out=[],eks={};let tarihBozuk=0,payBozuk=0;const t_=v=>String(v??'').trim();
+ for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,sp.kolon.length);if(a.every(v=>v===''||v==null))continue;const o={kaynak:'excel'};
+  sp.kolon.forEach((k,i)=>{o[k]=k==='tarih'?normTarih(a[i]):t_(a[i]);if(k==='vkn')o[k]=o[k].replace(/\.0$/,'')});
+  sp.zorunlu.forEach(k=>{if(!o[k])eks[k]=(eks[k]||0)+1});
+  if(id==='imalatci'&&o.tarih&&!/^\d{2}\.\d{2}\.\d{4}$/.test(o.tarih))tarihBozuk++;
+  if(id==='ortak'&&o.pay&&parseNum(o.pay)==null)payBozuk++;
+  out.push(o)}
+ if(!out.length){er('Dosyada veri satırı bulunamadı.');return RED()}
+ Object.keys(eks).forEach(k=>wr(`${eks[k]} satırda ${sp.etiket[k]} boş.`));
+ if(tarihBozuk)wr(`${tarihBozuk} satırın belge tarihi “gg.aa.yyyy” biçiminde değil.`);
+ if(payBozuk)wr(`${payBozuk} satırın pay oranı sayı olarak okunamadı.`);
+ return{ok:true,satirlar:out,uyari:U_}}
 const kdvExcelOku=(wb,o)=>tabloExcelOku(wb,'kdv',{dosya:o.dosya,vkn:o.vkn,anahtarlar:o.donemler});
-const api={excelTani,tabloExcelOku,faturaExcelOku,tedarikExcelOku,REF_ODEME,kdvExcelOku,TABLO_AD:AD,SPEC};if(N)module.exports=api;else Object.assign(g,api);
+const api={excelTani,tabloExcelOku,faturaExcelOku,tedarikExcelOku,listeExcelOku,LISTE_SPEC,REF_ODEME,kdvExcelOku,TABLO_AD:AD,SPEC};if(N)module.exports=api;else Object.assign(g,api);
 })(typeof window!=='undefined'?window:globalThis);

@@ -117,7 +117,7 @@ Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt 
 | 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı (ETTN Açıklama alanına yazılır); Envanter Defteri arşiv/Excel/elle. `berat.xslt` yalnızca görüntüleme stili |
 | 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Fatura no ile eşleşir; ödeme şekli tahsilatlardan FIFO ile önerilir (aşağıya bakın) |
 | 7 | İndirilecek KDV listesi (`.xls`/`.xlsx`), 191 muavin (`.xlsx`), e-fatura XML | 7 Tedarikçi | Dönem başına en yüksek 10 alım (matrah); ayrıntı aşağıda |
-| 8 | Elle girişler | 1, 6 | "İmalatçı değildir" gibi seçenekler |
+| 8 | Arşiv/Excel/elle | 1 Ortaklık, 6 İmalatçı | Pay toplamı %100 kontrolü; "imalatçı değildir" (uygulanamaz) |
 | 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
 
 **Referans:** "Karşıt İnceleme Tutanağı Cevabı.PDF", yüklemeden sonra e-Karşıt'ın tabloları nasıl gösterdiğini içerir (1-7. tablolar dolu). Çıktıyı doğrulamak için ve ileride "dolu cevap PDF'inden arşive aktarma" için kaynak olabilir.
@@ -180,6 +180,22 @@ Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`
 - **Uyarılar:** eksik zorunlu alan (ünvan, VKN, vergi dairesi, tarih, no, matrah, KDV); 191'de bulunamadı / KDV farklı; döviz ve tevkifat; Excel için yanlış tablo, yanlış VKN (dosya adı), dönem dışı satır, 10'dan fazla satır, bozuk tarih/sayı.
 - **"Uygulanamaz":** tedarikçi tablosu boş üretilir ve kapsamda tamam sayılır.
 - **Varsayım (doğrulanmadı):** vergi dairesi yazımı şablon örneğine uyularak `ADI (İL)`; XML'de il adı varsa eklenir.
+
+## Ortak ve imalatçı (Adım 8) — kurallar
+
+- **Kaynaklar:** arşiv; e-Karşıt Excel'i yüklenirse arşivin yerine **olduğu gibi** kullanılır; elle ekleme/düzenleme/çıkarma (geri alınabilir). Satırlar kaynağa göre kimliklenir (`a0…`, `x0…`, `e1…`); düzenlemeler satır kimliğine bağlıdır.
+- **Ortaklık uyarıları:** zorunlu alanlar (ünvan, VKN, il, vergi dairesi, pay), pay sayı değil, **pay oranları toplamı %100 değil**. Çıktıda pay 4 ondalıkla yazılır (`100.0000`); şablon örneğinde açıklama görev bilgisidir (örn. GENEL MÜDÜR).
+- **İmalatçı:** belge türü `Sanayi Sicil Belgesi` veya `Diğer`; **kapasite raporu için tür "Diğer", açıklama "Kapasite raporu"** (şablon örneği). Firma imalatçı değilse "imalatçı değildir" seçilir (cevap PDF'inde "İmalatçı değildir." yazar): tablo boş üretilir, kapsamda tamam sayılır.
+- **Excel yükleme:** yanlış tablo, dosya adındaki VKN, boş zorunlu alan, bozuk belge tarihi/pay uyarıları.
+
+## Güncellenmiş arşiv (Adım 9) — kurallar
+
+- **Neyi yazar:** tutanağın etkilediği yıllar (fatura ve KDV dönemleri ile Envanter yılı). Her etkilenen yıl için `ARŞİV YYYY` sayfası **etkin (birleştirilmiş) veriden yeniden yazılır**; diğer sayfalara ve ARŞİV dışı sayfalara dokunulmaz. Sayfa yoksa yeni oluşturulur (mükellef bloğu Ç) bilgilerinden), varsa mevcut mükellef bloğu korunur.
+- **Etkin veri:** arşiv satırları, belge/Excel/elle ile tamamlananların üstüne yazılmış hâlidir. Yıl dağılımı: defter → başlangıç yılı; işçi, KDV, tedarikçi → dönem yılı; ortak ve imalatçı yıl sayfasına bağlı değil (etkilenen sayfalara güncel liste yazılır). **Faturalar yazılmaz.**
+- **Anahtarlar** (aynı anahtar = üstüne yazar, sonuncusu kazanır): ortak ad+VKN; defter nev'i+başlangıç+bitiş; işçi/KDV dönem; imalatçı ad+VKN+belge no; tedarikçi dönem+no+ad.
+- **Biçim:** arşivin mevcut düzeni (B3:C7 mükellef bloğu, beyaz-koyu bölüm başlığı, açık gri sütun başlığı); tutarlar TR metin (`24.602.091,47`); kodlar okunur metne çevrilir (`E_DEFTER_YEVMIYE_DEFTERI` → `e-Defter Yevmiye Defteri`, `SANAYI_SICIL_BELGESI` → `Sanayi Sicil Belgesi`).
+- **Ekran raporu:** sayfa başına bölüm bazında Eklenen / Değişen / Aynı / Silinen; değişen kayıtların eski-yeni değeri; yeniden yazılan sayfada bilinen bölümler dışı içeriğin korunmayacağı uyarısı; silinecek kayıt varsa kırmızı uyarı.
+- **Dosya adı:** yüklenen arşivin adı + `_guncel`; arşiv yoksa `ARSIV_<ÜNVAN>`.
 
 ## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
 

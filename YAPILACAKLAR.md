@@ -12,10 +12,9 @@
 - [x] **Adım 5 — e-Berat ve yasal defterler** (onaylandı): e-Berat XML/PDF, yüklenen Excel, elle giriş (Envanter dahil), "berat süresi dolmadı"
 - [ ] **Adım 6 — Satış muavini (120)** (geliştirildi; kullanıcı testi bekliyor): fatura eşleştirme, defter kayıt tarihi, yevmiye no, tahsilatlardan ödeme şekli önerisi (FIFO), yüklenen Excel, elle düzenleme
 - [ ] **Adım 7 — Tedarikçi** (geliştirildi; kullanıcı testi bekliyor): İndirilecek KDV Listesi (xls/xlsx), 191 muavin doğrulaması, e-fatura XML (vergi dairesi, döviz), e-Karşıt Excel'i, VKN bazlı vergi dairesi, dönem başına en yüksek 10 alım, elle düzenleme/ekleme/çıkarma, "uygulanamaz"
-- [ ] **Adım 8 — Elle girişler** (ortak, imalatçı; "imalatçı değildir" seçeneği)
-- [ ] **Adım 9 — Kapsam ve çıktı**: 7 Excel + ZIP hazır (ilk sürüm); güncel arşiv çıktısı yok
-- [ ] Diğer tablolar için de Excel yükleme (Adım 4-8; `excelTani` altyapısı hazır)
-- [ ] "Uygulanamaz" durumu: tedarikçi için yapıldı (Adım 7); imalatçı için Adım 8'de
+- [ ] **Adım 8 — Ortak ve imalatçı** (geliştirildi; kullanıcı testi bekliyor): arşiv/Excel/elle; pay oranı toplamı kontrolü; "imalatçı değildir"
+- [ ] **Adım 9 — Kapsam ve çıktı** (geliştirildi; kullanıcı testi bekliyor): kapsam kartları, 7 Excel (ZIP), **güncellenmiş arşiv** (.xlsx; önizleme, fark raporu)
+- [x] "Uygulanamaz" durumu: tedarikçi (Adım 7) ve imalatçı (Adım 8)
 - [ ] Dolu cevap PDF'inden arşive aktarma (isteğe bağlı)
 
 ## Yapıldı

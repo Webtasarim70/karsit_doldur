@@ -11,12 +11,21 @@ e-Karşıt tutanak PDF'sini ve mevcut arşiv dosyasını yükleyin; e-Karşıt s
 
 ## Kullanım
 
-1. `index.html` dosyasını tarayıcıda açın (Chrome/Edge önerilir) veya GitHub Pages ile yayınlayın.
-2. e-Karşıt tutanak PDF'ini ve (varsa) arşiv `.xlsx` dosyasını yükleyin.
-3. Ekranda tutanak özeti, tespit edilen dönemler, faturalar ve 7 tablonun hazır/eksik durumu görünür.
-4. "Excel dosyalarını indir" ile 7 e-Karşıt Excel dosyası ZIP olarak indirilir.
+`index.html` dosyasını tarayıcıda açın (Chrome/Edge önerilir) veya GitHub Pages ile yayınlayın. Akış 9 adımdır; her adım "Onayla ve devam et" ile açılır:
 
-Yerel test (arayüzsüz): `npm install`, `node tests/run.js yerel/<pdf> yerel/<xlsx>` (kapsam raporu) ve `node tests/cikti.js yerel/<pdf> yerel/<xlsx> <klasör> [yıl]` (Excel çıktıları). Gerçek dosyalar `yerel/` klasöründe tutulur; `.gitignore` bunu dışlar.
+1. **e-Karşıt PDF** — tutanak okunur; fatura tarihlerinden dönemler belirlenir.
+2. **Arşiv** (isteğe bağlı) — mevcut arşiv `.xlsx`; VKN uyuşmazsa devam edilemez.
+3. **KDV** — beyanname/tahakkuk PDF'leri (eski ve yeni biçim), daha önce hazırlanmış Excel veya elle.
+4. **Muhtasar** — çalışan sayısı.
+5. **e-Berat ve defterler** — e-Berat XML/PDF, Envanter, "berat süresi dolmadı".
+6. **Satış muavini** — defter kayıt tarihi, yevmiye no, ödeme şekli.
+7. **Tedarikçi** — İndirilecek KDV Listesi, 191 muavin, e-fatura XML; dönem başına en yüksek 10 alım.
+8. **Ortak ve imalatçı**.
+9. **Kapsam ve çıktı** — 7 e-Karşıt Excel dosyası (ZIP) ve **güncellenmiş arşiv**.
+
+Her adımda belge, daha önce hazırlanmış Excel veya elle giriş kullanılabilir; kaynaklar farklıysa kullanıcı seçer. Dosyalar tarayıcıdan çıkmaz.
+
+Yerel test (arayüzsüz): `npm install`, ardından `node tests/<ad>.js ...` (`run`, `cikti`, `pdf_ozet`, `kdv_ozet`, `muhtasar_ozet`, `eberat_ozet`, `muavin_ozet`, `tedarikci_ozet`, `excel_oku`, `arsiv_yaz`). Gerçek dosyalar `yerel/` klasöründe tutulur; `.gitignore` bunu dışlar.
 
 ## Durum
 
