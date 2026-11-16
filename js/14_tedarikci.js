@@ -39,14 +39,14 @@ function efaturaXml(t){if(!/<(?:[\w-]+:)?Invoice\b/.test(t)||!/AccountingSupplie
   matrah:mt!=null&&kur?r2(mt*kur):null,kdv:kd!=null&&kur?r2(kd*kur):null,doviz:cur,uyari};
  b.donem=donemOfTarih(b.tarih)||'';if(!b.no||!b.tarih)b.hata='Fatura numarası veya tarihi okunamadı.';return b}
 /* ---- e-Karşıt tedarikçi Excel'i satırları (09_excel_oku.tedarikExcelOku sonrası) ve arşiv satırları aday olarak havuza girer ---- */
-const ALAN=['ad','vkn','vd','tarih','seri','no','matrah','kdv','gumTarih','gumNo'],ONC={arsiv:0,m191:1,liste:2,excel:3,xml:4,elle:5};
+const ALAN=['ad','vkn','vd','tarih','seri','no','matrah','kdv','gumTarih','gumNo'],ONC={arsiv:0,cevap:0.5,m191:1,liste:2,excel:3,xml:4,elle:5};
 /* girdi: {liste:[], m191:[], xml:[], excel:[], arsiv:[], el:{anahtar:{alan:değer}}, ekle:[{...}], cikar:{anahtar:true}, donemler:['07.2026',..]}
    çıktı: {donem:{mod, toplam, secili:[{key,alan,kay,origin,not:[],ek:bool}], cikarilan:[...]}} */
 function tedarikHesapla(g_){const H=new Map(),el=g_.el||{};
  const ekle=(row,k)=>{const key=nn(row.no);if(!key)return;let e=H.get(key);if(!e){e={key,alan:{},kay:{},origin:new Set(),donemKdv:null,m:null,u:[]};H.set(key,e)}e.origin.add(k);
   ALAN.forEach(f=>{const v=row[f];if(v==null||v==='')return;if(e.alan[f]==null||ONC[k]>=ONC[e.kay[f]]){e.alan[f]=v;e.kay[f]=k}});
   if(k==='liste'&&row.donem)e.donemKdv=row.donem;if(k==='m191')e.m=row.kdv;if(k==='xml'&&row.uyari)row.uyari.forEach(u=>{if(!e.u.includes(u))e.u.push(u)})};
- [['arsiv',g_.arsiv],['m191',g_.m191],['liste',g_.liste],['excel',g_.excel],['xml',g_.xml]].forEach(([k,L])=>(L||[]).forEach(r=>ekle(r,k)));
+ [['arsiv',g_.arsiv],['cevap',g_.cevap],['m191',g_.m191],['liste',g_.liste],['excel',g_.excel],['xml',g_.xml]].forEach(([k,L])=>(L||[]).forEach(r=>ekle(r,k)));
  (g_.ekle||[]).forEach(r=>ekle(r,'elle'));
  Object.keys(el).forEach(key=>{const e=H.get(key);if(e)ALAN.forEach(f=>{const v=el[key][f];if(v!=null&&v!==''){e.alan[f]=v;e.kay[f]='elle'}})});
  /* Vergi dairesi VKN bazında taşınır: doğrudan alanı olmayan satır, aynı VKN'nin başka kayıttaki vergi dairesini alır (kullanıcı eşlemesi > diğer kaynaklar) */
@@ -58,12 +58,13 @@ function tedarikHesapla(g_){const H=new Map(),el=g_.el||{};
   const kayn=hepsi.filter(e=>['liste','m191','xml'].some(k=>e.origin.has(k)));
   if(has('excel').length){mod='e-Karşıt Excel (olduğu gibi)';base=has('excel')}
   else if((liste||m191)&&kayn.filter(e=>e.origin.has('liste')||e.origin.has('m191')).length){mod=liste?'İndirilecek KDV Listesi (en yüksek 10 alım)':'191 muavin (en yüksek 10 alım, KDV’ye göre)';toplam=kayn.length;base=kayn.slice().sort((a,b)=>rank(b)-rank(a)).slice(0,10)}
-  else if(has('arsiv').length){mod='Arşiv';base=has('arsiv')}
+  else if(has('cevap').length){mod='Cevap yazısı';base=has('cevap')}
+   else if(has('arsiv').length){mod='Arşiv';base=has('arsiv')}
   else if(has('xml').length){mod='e-fatura XML (en yüksek 10 alım)';toplam=has('xml').length;base=has('xml').slice().sort((a,b)=>rank(b)-rank(a)).slice(0,10)}
   if((liste||m191)&&!kayn.filter(e=>e.origin.has('liste')||e.origin.has('m191')).length&&!has('excel').length)not.push(liste?'İndirilecek KDV Listesi bu dönemde fatura satırı içermiyor.':'191 muavin bu dönemde fatura satırı içermiyor.');
   const ek=has('elle'),set=new Map();base.concat(ek).forEach(e=>set.set(e.key,e));
   const tum=sirala([...set.values()]),cik=tum.filter(e=>(g_.cikar||{})[e.key]),sec=tum.filter(e=>!(g_.cikar||{})[e.key]);
-  out[d]={mod,toplam,secili:sec.map(e=>({key:e.key,alan:e.alan,kay:e.kay,origin:[...e.origin],ek:e.origin.has('elle')&&!e.origin.has('liste')&&!e.origin.has('m191')&&!e.origin.has('xml')&&!e.origin.has('excel')&&!e.origin.has('arsiv'),m:e.m,u:e.u})),cikarilan:cik.map(e=>({key:e.key,alan:e.alan})),not}});
+  out[d]={mod,toplam,secili:sec.map(e=>({key:e.key,alan:e.alan,kay:e.kay,origin:[...e.origin],ek:e.origin.has('elle')&&!e.origin.has('liste')&&!e.origin.has('m191')&&!e.origin.has('xml')&&!e.origin.has('excel')&&!e.origin.has('arsiv')&&!e.origin.has('cevap'),m:e.m,u:e.u})),cikarilan:cik.map(e=>({key:e.key,alan:e.alan})),not}});
  return out}
 /* Satır kontrolü: eksik zorunlu alanlar, 191 doğrulaması, XML uyarıları */
 function satirNotlari(s,m191var){const n=[],a=s.alan,eks=[['ad','ünvan'],['vkn','VKN'],['vd','vergi dairesi'],['tarih','fatura tarihi'],['no','fatura no'],['matrah','matrah'],['kdv','KDV']].filter(([k])=>a[k]==null||a[k]==='').map(x=>x[1]);
