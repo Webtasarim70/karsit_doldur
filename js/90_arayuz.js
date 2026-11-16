@@ -1,7 +1,7 @@
 /* Arayüz: adım adım ilerleyen akış. Her adım kullanıcı onayıyla açılır. Veriler yalnızca bellekte tutulur. */
 (function(){
 const {fmtTR,parseNum,donemOfTarih,defterAnahtar,normTarih}=KD;
-const S={adim:1,onay:{},pdf:null,ars:null,pdfAd:'',arsAd:'',st:{}},$=id=>document.getElementById(id);
+const S={adim:1,onay:{},pdf:null,ars:null,pdfAd:'',arsAd:'',st:{},bt:{}},$=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const BOS={mukellef:{},yillar:[],sayfalar:[],ortaklar:[],defterler:[],isciler:[],kdv:[],imalatcilar:[],tedarikciler:[]};
 pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
@@ -9,6 +9,9 @@ const msg=(t,k)=>$('durum').innerHTML=t?`<div class="msg ${k||'in'}">${t}</div>`
 /* ---------- kaynaklı adımlar (KDV, muhtasar ...): belge, Excel, elle giriş, arşiv ---------- */
 const son=(a,f)=>{for(let i=a.length-1;i>=0;i--)if(f(a[i]))return a[i];return null};
 const KAY={elle:'Elle girilen',belge:'Belge',excel:'Excel',arsiv:'Arşiv'},ONCELIK=['elle','belge','excel','arsiv'];
+/* e-Berat yükleme tercihi: vergi türü seçilmediyse VKN'den önerilir (10 hane → kurumlar, 11 hane/TCKN → gelir). */
+const btVergiOneri=()=>{const n=String((S.pdf&&S.pdf.kf&&S.pdf.kf.vn)||'').replace(/\D/g,'');return n.length===10?'kurumlar':n.length===11?'gelir':'gelir'};
+const btTercih=()=>({yukleme:S.bt.yukleme||'aylik',vergi:S.bt.vergi||btVergiOneri()});
 const ST=id=>S.st[id]??=(id==='ortak'||id==='imalatci'?{X:null,El:{},Ekle:[],Cikar:{},Uyg:false,Edit:null,EkleAc:false,Err:'',Taslak:null,Sayac:0}:id==='ted'?{Liste:null,M:null,Xml:[],Xl:null,El:{},Ekle:[],Cikar:{},VdMap:{},Uyg:false,Edit:null,EkleAc:null,Err:'',Taslak:null}:{B:[],X:null,El:{},Sec:{},Edit:null,Err:'',Taslak:null});
 const normT=s=>String(s||'').toLocaleUpperCase('tr-TR').replace(/İ/g,'I').replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 const CFG={
@@ -34,7 +37,7 @@ const CFG={
   belgeVeri(docs,K){const map={},uyari=[];docs.slice().sort((a,b)=>(a.onay||'')<(b.onay||'')?-1:1).forEach(b=>b.satirlar.forEach(x=>{if(!K.includes(x.donem))return;
     if(map[x.donem])uyari.push(`${x.donem}: birden fazla muhtasar beyannamesi yüklendi; onay zamanı en yeni olan kullanıldı.`);
     map[x.donem]={veri:{donem:x.donem,sayi:x.sayi,vd:b.vergiDairesi||''},chips:[{ad:'Beyanname',ok:true,iste:1}],notlar:b.uyari||[]}}));return{map,uyari}},
-  kontrol(v){const m=[],c=normT(S.pdf.kf.vd),w=normT(v.vd).split(' ')[0];if(!v.vd)m.push('Vergi dairesi boş.');else if(c&&w&&!c.includes(w))m.push(`Beyannamenin vergi dairesi (${v.vd}) tutanaktaki Ç) vergi dairesinden (${S.pdf.kf.vd}) farklı görünüyor.`);if(!v.sayi)m.push('Çalışan sayısı 0.');return m}}};
+  kontrol(v){const m=[],c=normT(S.pdf.kf.vd),w=normT(v.vd).split(' ')[0];if(!v.vd)m.push('Vergi dairesi boş.');else if(c&&w&&!c.includes(w))m.push(`Beyannamenin vergi dairesi (${v.vd}) tutanaktaki karşıt yapılan ilgili mükellefin vergi dairesinden (${S.pdf.kf.vd}) farklı görünüyor.`);if(!v.sayi)m.push('Çalışan sayısı 0.');return m}}};
 CFG.defter={id:'defter',adim:5,ad:'e-Berat ve yasal defterler',tablo:'Tablo 2: Yasal defterler',arsKey:'defterler',excel:'defter',rowKey:defterAnahtar,
  anahtar:()=>defterGerekli(donemler(S.pdf)).map(x=>x.ad),anahtarMetin:'Gerekli defterler',anahtarEk:'(fatura aylarının e-Defter Yevmiye ve Kebir beratları, fatura yıllarının Envanter Defteri)',disMetin:'yasal defter kayıtları',
  kolon:[['nevi','Defterin nev’i','t'],['bas','Başlangıç dönemi','t'],['bit','Bitiş dönemi','t'],['makam','Tasdik makamı','t'],['tarih','Tasdik tarihi','t'],['no','Tasdik/berat no','t'],['aciklama','Açıklama (ETTN)','t'],['tur','Defter türü açıklama','t']],
@@ -51,7 +54,7 @@ CFG.defter={id:'defter',adim:5,ad:'e-Berat ve yasal defterler',tablo:'Tablo 2: Y
  kontrol(v){const m=[];if(!/süre iş bu yazı|yüklenmemiştir/i.test(v.aciklama||'')){if(!UUID_RE.test(v.aciklama||''))m.push('ETTN eksik: e-Defter satırlarında Açıklama alanında ETTN bulunmalı.');if(!v.no)m.push('Tasdik/berat no boş.');if(!v.tarih)m.push('Tasdik tarihi boş.')}return m},
  varsayilan:key=>{const m=/^(Yevmiye|Kebir) (\d{2}\.\d{4})$/.exec(key);if(m)return{nevi:m[1]==='Yevmiye'?'e-Defter Yevmiye Defteri':'e-Defter Defteri Kebir',bas:m[2],bit:m[2],makam:'GİB',tur:''};const e=/^Envanter (\d{4})$/.exec(key);return e?{nevi:'ENVANTER DEFTERİ',bas:'01.'+e[1],bit:'12.'+e[1],tur:''}:{}},
  dogrula:(v,key)=>defterAnahtar(v)===key?'':`Defterin nev’i ve dönemi bu kayıtla (${key}) uyuşmuyor: Yevmiye/Kebir için başlangıç ve bitiş dönemi aynı ay (AA.YYYY) olmalı, Envanter için nev’de “Envanter” geçmeli ve yıl ${key.slice(-4)} olmalı.`,
- kartBilgi(x){if(/^Envanter/.test(x.key))return[];const su=eberatSuresi(x.key.slice(-7));return su?[{k:su.doldu?'wr':'in',t:`e-Berat yükleme süresi (temel kural): ${su.son} — bugün itibarıyla ${su.doldu?'dolmuştur; berat yüklenmiş olmalı.':'dolmamıştır; “süresi dolmadı” seçeneği kullanılabilir.'} Resmî süre uzatımları ayrıca geçerli olabilir.`}]:[]},
+ kartBilgi(x){if(/^Envanter/.test(x.key))return[];const su=eberatSuresi(x.key.slice(-7),undefined,btTercih());return su?[{k:su.doldu?'wr':'in',t:`e-Berat son yükleme tarihi (${su.etiket}): ${su.son}${su.kaynak==='hesap'?' (GİB notunda bu dönem yok; kuralla hesaplandı)':''} — bugün itibarıyla ${su.doldu?'dolmuştur; berat yüklenmiş olmalı.':'dolmamıştır; “süresi dolmadı” seçeneği kullanılabilir.'} Resmî süre uzatımları ayrıca geçerli olabilir.`}]:[]},
  ozel:key=>{const m=/^(Yevmiye|Kebir) (\d{2}\.\d{4})$/.exec(key);return m?{...CFG.defter.varsayilan(key),tarih:'',no:'',aciklama:SD_NOTU}:null},ozelAd:'Berat süresi dolmadı (yüklenmedi) olarak işaretle'};
 function fkVar(c,vals){return c[2]==='t'?new Set(vals.filter(Boolean)).size>1:Math.max(...vals.map(x=>x||0))-Math.min(...vals.map(x=>x||0))>0.005}
 /* Her anahtar (dönem) için kaynaklar: elle > belge > yüklenen Excel > arşiv. Varsayılan en öncelikli kaynak; farklıysa kullanıcı seçer. */
@@ -125,7 +128,7 @@ function tedOku(donem,key){const st=ST('ted'),v={};st.Taslak={};document.querySe
  v.donem=donem;return v}
 function s7(){const st=ST('ted'),vp=(S.pdf.kf.vn||'').trim(),D=donemler(S.pdf).fatura,H=tedHesapla(),m191=!!(st.M&&st.M.ok);
  const dur=(X,ad)=>X?`<div style="margin-top:8px"><div class="chips"><span class="chip ${X.ok?'ok':'er'}">${ad}: ${esc(X.ad)} — ${X.ok?(X.satirlar.length+' satır'):'kullanılamıyor'}</span></div>${X.uyari.map(u=>`<div class="msg ${u.k==='er'?'er':u.k==='wr'?'wr':'in'}" style="margin-top:6px">${esc(u.t)}</div>`).join('')}</div>`:'';
- const xml=st.Xml.map((b,i)=>{let du,k;if(!b.tur){du='Tanınmadı: e-Fatura/e-Arşiv XML’i değil';k='er'}else if(b.hata){du='Okunamadı: '+esc(b.hata);k='er'}else if(b.aliciVkn&&b.aliciVkn!==vp){du=`Alıcı VKN (${esc(b.aliciVkn)}) Ç) mükellefle eşleşmiyor; kullanılmayacak`;k='er'}else if(!D.includes(b.donem)){du='Bu tutanağın fatura dönemleri dışında; kullanılmayacak';k='wr'}else{du='Kullanılacak';k='ok'}
+ const xml=st.Xml.map((b,i)=>{let du,k;if(!b.tur){du='Tanınmadı: e-Fatura/e-Arşiv XML’i değil';k='er'}else if(b.hata){du='Okunamadı: '+esc(b.hata);k='er'}else if(b.aliciVkn&&b.aliciVkn!==vp){du=`Alıcı VKN (${esc(b.aliciVkn)}) karşıt yapılan ilgili mükellefle eşleşmiyor; kullanılmayacak`;k='er'}else if(!D.includes(b.donem)){du='Bu tutanağın fatura dönemleri dışında; kullanılmayacak';k='wr'}else{du='Kullanılacak';k='ok'}
   return `<tr><td>${esc(b.dosya)}</td><td>${esc(b.no||'—')}</td><td>${esc(b.tarih||'—')}</td><td>${esc((b.ad||'').slice(0,26))}<br>${esc(b.vkn||'—')}</td><td class="n">${b.matrah==null?'—':fmtTR(b.matrah)}</td><td class="n">${b.kdv==null?'—':fmtTR(b.kdv)}</td><td><span class="chip ${k}">${du}</span></td><td><button class="x" data-ka="xmlsil:ted:${i}" title="Kaldır">✕</button></td></tr>`}).join('');
  let h=`<section><h2>7. Tedarikçi bilgileri</h2><p class="note" style="margin:0 0 10px">Fatura dönemlerinde (<b>${D.join(', ')}</b>) satın alınan mallar için <b>dönem başına en yüksek 10 alım</b> (matrah) gerekir. Kaynaklar: İndirilecek KDV Listesi (alım listesi, matrah ve KDV), 191 muavin (KDV doğrulaması), e-fatura XML (vergi dairesi, tek tek fatura), daha önce hazırlanmış Excel veya arşiv. Vergi dairesi listede ve muavinde yer almaz; e-fatura XML’inden veya elle girilir (aynı VKN’ye tek seferde).</p>`+
   `<label style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="chkUyg"${st.Uyg?' checked':''} style="width:auto"> Bu firma için tedarikçi tablosu uygulanamaz (tabloyu boş üret)</label>`+
@@ -209,7 +212,7 @@ function arsUyumsuz(){const a=S.ars,vp=(S.pdf.kf.vn||'').trim(),va=a?(a.mukellef
 function s2(){let h=`<section><h2>2. Mevcut arşiv (.xlsx)</h2>${drop('dArs','fArs','Arşiv dosyası','.xlsx',S.arsAd,'İsteğe bağlı: arşiviniz yoksa bu adımı onaylayıp devam edebilirsiniz')}`+(S.ars?'<p style="margin:10px 0 0"><button class="btn2" id="bArsKaldir">Arşivi kaldır</button></p>':'')+'</section>';
  const a=S.ars;if(!a)return h;
  const vp=(S.pdf.kf.vn||'').trim(),va=(a.mukellef.vkn||'').trim(),e=arsivEslesme(S.pdf,a),D=e.donemler;
- h+=(arsUyumsuz()?`<div class="msg er">Arşivdeki VKN (${esc(va)}) tutanaktaki Ç) mükellef VKN’si (${esc(vp)}) ile eşleşmiyor. Bu arşivle devam edilemez; doğru arşivi seçin veya arşivi kaldırın.</div>`:(va&&va===vp?'<div class="msg ok">Arşiv, Ç) mükellefle eşleşti.</div>':'<div class="msg wr">Arşivde mükellef VKN’si okunamadı; mükellefle eşleştiği doğrulanamadı.</div>'));
+ h+=(arsUyumsuz()?`<div class="msg er">Arşivdeki VKN (${esc(va)}) tutanaktaki karşıt yapılan ilgili mükellefin VKN’si (${esc(vp)}) ile eşleşmiyor. Bu arşivle devam edilemez; doğru arşivi seçin veya arşivi kaldırın.</div>`:(va&&va===vp?'<div class="msg ok">Arşiv, karşıt yapılan ilgili mükellefle eşleşti.</div>':'<div class="msg wr">Arşivde mükellef VKN’si okunamadı; mükellefle eşleştiği doğrulanamadı.</div>'));
  const yokYil=D.yillar.filter(y=>!a.yillar.includes(y));
  if(yokYil.length)h+=`<div class="msg wr">Arşivde ARŞİV ${yokYil.join(', ')} sayfası yok; bu yıla ait veriler sonraki adımlarda eklenecek ve arşive yeni sayfa olarak yazılacak.</div>`;
  const T=(t,cols,rows,bos)=>`<div class="card"><h3>${t}</h3>`+(rows.length?`<div class="tw"><table><thead><tr>${cols.map(c=>`<th${c[2]?' class="n"':''}>${c[1]}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(([k,,n])=>`<td${n?' class="n"':''}>${k==='_d'?r._d:esc(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<p class="note">${bos}</p>`)+'</div>';
@@ -228,7 +231,7 @@ function formK(cfg,x){const st=ST(cfg.id),v=x.kullanilan||(cfg.varsayilan?cfg.va
  cfg.kolon.map(([k,l,t])=>`<label>${l}<input class="fi" data-kf="${k}" value="${esc(st.Taslak&&st.Taslak[k]!==undefined?st.Taslak[k]:(t==='t'?v[k]||'':(x.kullanilan?(t==='n'?fmtTR(v[k]||0):String(v[k]??0)):'')))}" placeholder="${t==='n'?'0,00':t==='i'?'0':''}"></label>`).join('')+
  `</div>${st.Err?`<div class="msg er" style="margin-top:8px">${esc(st.Err)}</div>`:''}<p class="note">${cfg.kolon.some(c=>c[2]==='n')?'Tutarları 1.234,56 biçiminde yazın; boş bırakılan tutar 0 sayılır. ':''}Kaydedince bu ${cfg.disMetin.replace(/leri$|ları$/,'')} için “Elle girilen” kaynak kullanılır.</p><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-ka="kaydet:${cfg.id}:${x.key}">Kaydet</button><button class="btn2" data-ka="iptal:${cfg.id}:">İptal</button></div></div>`}
 function kaynakli(cfg){const st=ST(cfg.id),vp=(S.pdf.kf.vn||'').trim(),K=cfg.anahtar(),d=durumK(cfg),X=st.X;
- const bel=st.B.map((b,i)=>{let du,k;if(!b.tur){du=cfg.tanimsiz;k='er'}else if(b.hata){du='Okunamadı: '+esc(b.hata);k='er'}else if(b.vkn!==vp){du=`Ç) mükellefe ait değil (VKN ${esc(b.vkn||'?')}); kullanılmayacak`;k='er'}else if(!cfg.belgeKeys(b).some(x=>K.includes(x))){du=`Bu tutanağın ${cfg.disMetin} dışında; kullanılmayacak`;k='wr'}else{du='Kullanılacak';k='ok'}
+ const bel=st.B.map((b,i)=>{let du,k;if(!b.tur){du=cfg.tanimsiz;k='er'}else if(b.hata){du='Okunamadı: '+esc(b.hata);k='er'}else if(b.vkn!==vp){du=`karşıt yapılan ilgili mükellefe ait değil (VKN ${esc(b.vkn||'?')}); kullanılmayacak`;k='er'}else if(!cfg.belgeKeys(b).some(x=>K.includes(x))){du=`Bu tutanağın ${cfg.disMetin} dışında; kullanılmayacak`;k='wr'}else{du='Kullanılacak';k='ok'}
   return `<tr><td>${esc(b.ad)}</td><td>${b.tur?cfg.turAd(b):'—'}</td><td>${b.tur?cfg.bicimAd(b):'—'}</td><td>${esc(b.vkn||'—')}</td><td>${esc(b.donem||'—')}</td><td><span class="chip ${k}">${du}</span></td><td><button class="x" data-ka="bsil:${cfg.id}:${i}" title="Kaldır">✕</button></td></tr>`}).join('');
  let h=`<section><h2>${cfg.adim}. ${cfg.ad}</h2><p class="note" style="margin:0 0 10px">${cfg.anahtarMetin}: <b>${K.join(', ')}</b> ${cfg.anahtarEk}. ${cfg.giris}</p><div class="up">`+
   drop('dB_'+cfg.id,'fB_'+cfg.id,cfg.belgeBaslik,cfg.belgeKabul||'.pdf,application/pdf',st.B.length?`${st.B.length} belge yüklendi`:'',cfg.belgeIpucu,'kb:'+cfg.id,1)+
@@ -245,7 +248,9 @@ function kaynakli(cfg){const st=ST(cfg.id),vp=(S.pdf.kf.vn||'').trim(),K=cfg.ana
    (x.kullanilan?`<p class="note" style="margin:6px 0 0">Excel’e yazılacak: <b>${KAY[x.sec]}</b> değerleri.</p>`:'')+kont.map(m=>`<div class="msg wr" style="margin-top:6px">${esc(m)}</div>`).join('')+(cfg.kartBilgi?cfg.kartBilgi(x).map(n=>`<div class="msg ${n.k}" style="margin-top:6px">${esc(n.t)}</div>`).join(''):'')+
    (st.Edit===x.key?formK(cfg,x):`<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn2" data-ka="duz:${cfg.id}:${x.key}">${x.kullanilan?'Değerleri düzenle':'Elle gir'}</button>${cfg.ozel&&cfg.ozel(x.key)?`<button class="btn2" data-ka="ozel:${cfg.id}:${x.key}">${cfg.ozelAd}</button>`:''}${x.kay.elle?`<button class="btn2" data-ka="elsil:${cfg.id}:${x.key}">Elle girişi sil</button>`:''}</p>`)+'</div>'}).join('')+'</section>';
  return h}
-const s3=()=>kaynakli(CFG.kdv),s4=()=>kaynakli(CFG.isci),s5=()=>kaynakli(CFG.defter);
+const s3=()=>kaynakli(CFG.kdv),s4=()=>kaynakli(CFG.isci),s5=()=>{const t=btTercih(),oto=!S.bt.vergi,sel=(ad,o,v)=>`<select data-bt="${ad}">${Object.entries(o).map(([k,l])=>`<option value="${k}"${v===k?' selected':''}>${l}</option>`).join('')}</select>`,
+ p=`<div class="card" style="background:var(--bg);margin:0 0 10px"><h3>e-Berat yükleme tercihi</h3><p class="note" style="margin:0 0 8px">“Berat süresi dolmadı” kararı için son yükleme tarihi bu seçimlere göre belirlenir (GİB takvimi).</p><div class="g"><label>Yükleme tercihi${sel('yukleme',BERAT_YUKLEME,t.yukleme)}</label><label>Mükellef türü${sel('vergi',BERAT_VERGI,t.vergi)}</label></div>${oto?`<p class="note" style="margin:6px 0 0">Mükellef türü, karşıt yapılan ilgili mükellefin VKN’sinden (${S.pdf.kf.vn||'—'}) önerildi; gerekirse değiştirin.</p>`:''}</div>`;
+ return kaynakli(CFG.defter).replace('<div class="up">',p+'<div class="up">')};
 /* ---------- Adım 4-8: henüz hazır değil ---------- */
 const YOK=[];
 const yokS=(id,ad,not)=>()=>`<section><h2>${id}. ${ad}</h2><p>Bu adım henüz hazır değil; sıradaki geliştirmelerde eklenecek.</p><p class="note">${not}</p></section>`;
@@ -327,7 +332,8 @@ function elleOku(cfg,key){const st=ST(cfg.id),v={donem:key,kaynak:'elle'};let ha
  if(!hata&&cfg.dogrula)hata=cfg.dogrula(v,key)||'';
  if(hata){st.Err=hata;return null}return v}
 /* ---------- olaylar (kök üzerinde) ---------- */
-document.addEventListener('change',e=>{const t=e.target;if(t.id==='fPdf'||t.id==='fArs'){yukle(t.id==='fPdf'?'pdf':'ars',t.files[0]);t.value=''}
+document.addEventListener('change',e=>{const t=e.target;
+ if(t.dataset&&t.dataset.bt){S.bt[t.dataset.bt]=t.value;render()}if(t.id==='fPdf'||t.id==='fArs'){yukle(t.id==='fPdf'?'pdf':'ars',t.files[0]);t.value=''}
  if(t.id&&t.id.startsWith('fB_')){yukle('kb:'+t.id.slice(3),[...t.files]);t.value=''}
  {const m=/^f(L|M|Xm|K)_ted$/.exec(t.id||'');if(m){yukle({L:'tl',M:'tm',Xm:'tx',K:'tk'}[m[1]]+':ted',m[1]==='Xm'?[...t.files]:t.files[0]);t.value=''}}
  {const m=/^fE_(ortak|imalatci)$/.exec(t.id||'');if(m){yukle('le:'+m[1],t.files[0]);t.value=''}}

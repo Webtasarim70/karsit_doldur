@@ -15,7 +15,7 @@ const T=(id,ad,gerekli,eksik,not,kaynak)=>({id,ad,gerekli,var:gerekli-eksik.leng
 const faturaTam=i=>!!(i.dk&&i.yevNo&&i.odeme);
 function kapsam(pdf,ars){const D=donemler(pdf),uyari=[];
  const vp=(pdf.kf.vn||'').trim(),va=(ars.mukellef.vkn||'').trim();
- const vkn={pdf:vp,arsiv:va,eslesiyor:!!vp&&vp===va};if(!vkn.eslesiyor)uyari.push(`Arşivdeki VKN (${va||'yok'}) tutanaktaki Ç) mükellef VKN'si (${vp||'yok'}) ile eşleşmiyor.`);
+ const vkn={pdf:vp,arsiv:va,eslesiyor:!!vp&&vp===va};if(!vkn.eslesiyor)uyari.push(`Arşivdeki VKN (${va||'yok'}) tutanaktaki karşıt yapılan ilgili mükellefin VKN'si (${vp||'yok'}) ile eşleşmiyor.`);
  const tut={matrah:pdf.inv.reduce((a,i)=>a+(parseNum(i.matrah)||0),0),kdv:pdf.inv.reduce((a,i)=>a+(parseNum(i.kdv)||0),0)};
  if(pdf.toplam&&pdf.toplam.length>=2){const[m,k]=pdf.toplam.map(parseNum);if(Math.abs(m-tut.matrah)>0.01||Math.abs(k-tut.kdv)>0.01)uyari.push(`PDF toplamı (${fmtTR(m)} / ${fmtTR(k)}) satır toplamından (${fmtTR(tut.matrah)} / ${fmtTR(tut.kdv)}) farklı; fatura satırları eksik okunmuş olabilir.`)}
  const tablolar=[],dg=defterGerekli(D),fe=pdf.inv.filter(i=>!faturaTam(i)).map(i=>i.no);

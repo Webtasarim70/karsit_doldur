@@ -29,7 +29,7 @@ async function tabloExcelOku(wb,id,opt){const sp=SPEC[id],U_=[],er=t=>U_.push({k
  if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${sp.ad}” Excel dosyasını seçin.`);return RED()}
  if(tani.id!==id){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu adımda “${sp.ad}” tablosu bekleniyor.`);return RED()}
  const m=/^(\d{10,11})_/.exec(opt.dosya||'');
- if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki karşıt yapılan ilgili mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
  if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
  const out=[],gorulen={};let bos=0,sayiDegil=0,gecersiz=0,dis=0,metinBos=0,taninmayan=0;
  for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,sp.kolon.length);if(a.every(x=>x===''||x==null))continue;
@@ -66,7 +66,7 @@ async function faturaExcelOku(wb,opt){const U_=[],er=t=>U_.push({k:'er',t}),wr=t
  if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${AD.fatura}” Excel dosyasını seçin.`);return RED()}
  if(tani.id!=='fatura'){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu adımda “${AD.fatura}” tablosu bekleniyor.`);return RED()}
  const m=/^(\d{10,11})_/.exec(opt.dosya||'');
- if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki karşıt yapılan ilgili mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
  if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
  const map={},tut=Object.fromEntries((opt.inv||[]).map(i=>[nn(i.no),i]));let dis=0,satir=0,bosDk=0,bosYev=0,bosOd=0,tutarFark=0;const gecersizOd=new Set(),yinelen=[];
  for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,10);if(a.every(v=>v===''||v==null))continue;satir++;
@@ -94,7 +94,7 @@ async function tedarikExcelOku(wb,opt){const U_=[],er=t=>U_.push({k:'er',t}),wr=
  if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${AD.tedarikci}” Excel dosyasını seçin.`);return RED()}
  if(tani.id!=='tedarikci'){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu adımda “${AD.tedarikci}” tablosu bekleniyor.`);return RED()}
  const m=/^(\d{10,11})_/.exec(opt.dosya||'');
- if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki karşıt yapılan ilgili mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
  if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
  const out=[],gorulen={},say={};let dis=0,eksik=0,sayiDegil=0,noYok=0,tarihBozuk=0;const t_=v=>String(v??'').trim();
  for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,10);if(a.every(v=>v===''||v==null))continue;
@@ -127,7 +127,7 @@ async function listeExcelOku(wb,id,opt){const sp=LISTE_SPEC[id],U_=[],er=t=>U_.p
  if(!tani.id){er(`Bu dosya e-Karşıt tablo şablonlarından hiçbiriyle eşleşmiyor (başlık satırı uyuşmuyor). e-Karşıt’a yüklenecek “${sp.ad}” Excel dosyasını seçin.`);return RED()}
  if(tani.id!==id){er(`Bu dosya “${AD[tani.id]}” tablosuna ait görünüyor; bu bölümde “${sp.ad}” tablosu bekleniyor.`);return RED()}
  const m=/^(\d{10,11})_/.exec(opt.dosya||'');
- if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki Ç) mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
+ if(m&&opt.vkn&&m[1]!==opt.vkn){er(`Dosya adındaki VKN (${m[1]}) tutanaktaki karşıt yapılan ilgili mükellefin VKN’si (${opt.vkn}) ile eşleşmiyor; başka mükellefin dosyası olabilir.`);return RED()}
  if(!m)wr('Dosya adında VKN yok; dosyanın bu mükellefe ait olduğu doğrulanamadı. Satırların doğru firmaya ait olduğundan emin olun.');
  const out=[],eks={};let tarihBozuk=0,payBozuk=0;const t_=v=>String(v??'').trim();
  for(let r=2;r<=ws.rowCount;r++){const a=satir_(ws,r,sp.kolon.length);if(a.every(v=>v===''||v==null))continue;const o={kaynak:'excel'};

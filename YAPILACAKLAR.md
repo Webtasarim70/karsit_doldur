@@ -14,6 +14,8 @@
 - [ ] **Adım 7 — Tedarikçi** (geliştirildi; kullanıcı testi bekliyor): İndirilecek KDV Listesi (xls/xlsx), 191 muavin doğrulaması, e-fatura XML (vergi dairesi, döviz), e-Karşıt Excel'i, VKN bazlı vergi dairesi, dönem başına en yüksek 10 alım, elle düzenleme/ekleme/çıkarma, "uygulanamaz"
 - [ ] **Adım 8 — Ortak ve imalatçı** (geliştirildi; kullanıcı testi bekliyor): arşiv/Excel/elle; pay oranı toplamı kontrolü; "imalatçı değildir"
 - [ ] **Adım 9 — Kapsam ve çıktı** (geliştirildi; kullanıcı testi bekliyor): kapsam kartları, 7 Excel (ZIP), **güncellenmiş arşiv** (.xlsx; önizleme, fark raporu)
+- [ ] **e-Berat yükleme tercihi** (geliştirildi; kullanıcı testi bekliyor): aylık/3 aylık yükleme ve gelir/kurumlar vergisi mükellefi seçimi; “süresi dolmadı” için son yükleme tarihi GİB notuna göre hesaplanır
+- [x] Arayüz metinlerinde “Ç) mükellef” → “karşıt yapılan ilgili mükellef”
 - [x] "Uygulanamaz" durumu: tedarikçi (Adım 7) ve imalatçı (Adım 8)
 - [ ] Dolu cevap PDF'inden arşive aktarma (isteğe bağlı)
 

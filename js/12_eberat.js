@@ -152,9 +152,28 @@ function eberatBelge(r,bicim){const b={tur:'eberat',bicim,...r,donem:r.baslangic
  return b}
 const eberatAnahtar=b=>b.hata?null:`${b.dokumanTipi==='Yevmiye Defteri'?'Yevmiye':'Kebir'} ${b.baslangic}`;
 const eberatSatir=b=>({nevi:b.dokumanTipi==='Yevmiye Defteri'?'e-Defter Yevmiye Defteri':'e-Defter Defteri Kebir',bas:b.baslangic,bit:b.bitis,makam:'GİB',tarih:b.olusturma,no:b.tekilNo,aciklama:b.ettn||'',tur:''});
-/* Temel kural (ekarsit ile aynı): ilgili ayı izleyen ikinci ayın son günü. Resmî süre uzatımları ayrıca geçerli olabilir. */
-function eberatSuresi(donem,bugun){const m=/^(\d{2})\.(\d{4})$/.exec(donem||'');if(!m)return null;const d=new Date(+m[2],+m[1]+2,0,23,59,59,999);
- return{son:K.normTarih(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')),doldu:(bugun||new Date())>d}}
-const api={eberatXml,eberatPdf,eberatAnahtar,eberatSatir,eberatSuresi,SD_NOTU,UUID_RE:UUID};
+/* e-Berat son yükleme tarihi — GİB takvimi (kullanıcının "e berat yükleme tarihleri notu").
+   tercih: {yukleme:'aylik'|'uc_aylik', vergi:'gelir'|'kurumlar'}.
+   Notta açıkça yazan tarihler TABLO'dan alınır; notta olmayan dönemler kuralla hesaplanır
+   (aylık: ilgili ayı izleyen 4. ayın 10'u/14'ü, Aralık kurumlar 5. ayın 14'ü; 3 aylık: Haziran/Eylül/Aralık, 4. dönem Nisan/Mayıs;
+   hesaplananlar hafta sonuna denk gelirse ilk iş gününe ertelenir). */
+const BERAT_TABLO={
+ 'aylik|gelir':{'01.2026':[10,5,2026],'06.2026':[12,10,2026],'12.2026':[10,4,2027]},
+ 'aylik|kurumlar':{'01.2026':[14,5,2026],'07.2026':[16,11,2026],'12.2026':[14,5,2027]},
+ 'uc_aylik|gelir':{'2026-1':[10,6,2026],'2026-2':[10,9,2026],'2026-3':[10,12,2026],'2026-4':[10,4,2027]},
+ 'uc_aylik|kurumlar':{'2026-1':[14,6,2026],'2026-2':[14,9,2026],'2026-3':[14,12,2026],'2026-4':[14,5,2027]}};
+const BERAT_YUKLEME={aylik:'Aylık yükleme',uc_aylik:'3 aylık (geçici vergi dönemi) yükleme'},BERAT_VERGI={gelir:'Gelir vergisi mükellefi',kurumlar:'Kurumlar vergisi mükellefi'};
+function eberatSuresi(donem,bugun,tercih){const m=/^(\d{2})\.(\d{4})$/.exec(donem||'');if(!m)return null;
+ const t={yukleme:'aylik',vergi:'gelir',...(tercih||{})},ay=+m[1],yil=+m[2],uc=t.yukleme==='uc_aylik',kr=t.vergi==='kurumlar',gun=kr?14:10,
+  anahtar=uc?`${yil}-${Math.ceil(ay/3)}`:donem,sabit=(BERAT_TABLO[t.yukleme+'|'+t.vergi]||{})[anahtar];
+ let d,kaynak;
+ if(sabit){d=new Date(sabit[2],sabit[1]-1,sabit[0],23,59,59,999);kaynak='not'}
+ else{let a;if(uc){const q=Math.ceil(ay/3);a=q===4?new Date(yil+1,(kr?5:4)-1,gun):new Date(yil,[6,9,12][q-1]-1,gun)}
+  else a=new Date(yil,ay-1+(kr&&ay===12?5:4),gun);
+  const w=a.getDay();if(w===6)a.setDate(a.getDate()+2);else if(w===0)a.setDate(a.getDate()+1);
+  d=new Date(a.getFullYear(),a.getMonth(),a.getDate(),23,59,59,999);kaynak='hesap'}
+ const p2=n=>String(n).padStart(2,'0');
+ return{son:K.normTarih(d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())),doldu:(bugun||new Date())>d,kaynak,tercih:t,etiket:`${BERAT_YUKLEME[t.yukleme]}, ${BERAT_VERGI[t.vergi]}`}}
+const api={eberatXml,eberatPdf,eberatAnahtar,eberatSatir,eberatSuresi,BERAT_YUKLEME,BERAT_VERGI,SD_NOTU,UUID_RE:UUID};
 if(typeof module!=='undefined')module.exports=api;else Object.assign(g,api);
 })(typeof window!=='undefined'?window:globalThis);
