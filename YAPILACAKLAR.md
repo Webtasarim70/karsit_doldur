@@ -17,7 +17,7 @@
 - [ ] **e-Berat yükleme tercihi** (geliştirildi; kullanıcı testi bekliyor): aylık/3 aylık yükleme ve gelir/kurumlar vergisi mükellefi seçimi; “süresi dolmadı” için son yükleme tarihi GİB notuna göre hesaplanır
 - [x] Arayüz metinlerinde “Ç) mükellef” → “karşıt yapılan ilgili mükellef”
 - [x] "Uygulanamaz" durumu: tedarikçi (Adım 7) ve imalatçı (Adım 8)
-- [ ] **Cevap yazısı (dolu tutanak) desteği** (geliştirildi; kullanıcı testi bekliyor): Adım 1'de yüklenen PDF cevap yazısıysa 1-7. tablolar okunur (`js/16_cevap.js`); Adım 3-8'de “Cevap yazısı” kaynağı olarak görünür, Adım 9 eksikleri gösterir; veriler güncellenmiş arşive de yazılır
+- [ ] **Cevap yazısı (dolu tutanak) desteği** (geliştirildi; kullanıcı testi bekliyor): Adım 1'de yüklenen PDF cevap yazısıysa 1-7. tablolar okunur (`js/16_cevap.js`); Adım 3-8'de “Cevap yazısı” kaynağı olarak görünür, Adım 9 eksikleri gösterir; veriler güncellenmiş arşive de yazılır; Adım 1'de seçenek sunulur: “bilgileri arşiv dosyası için kullan” (doğrudan Adım 9) veya “eksikleri tamamla” (adım adım akış)
 - [ ] Cevap yazısında 6. tablo (imalatçı satırlı) ve çok dönemli/çok sayfalı tablolar için gerçek örnek bekleniyor
 
 ## Yapıldı

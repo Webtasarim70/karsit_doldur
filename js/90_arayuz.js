@@ -206,7 +206,7 @@ function s1(){let h=`<section><h2>1. e-Karşıt tutanak PDF’i</h2>${drop('dPdf
   `<div class="card"><h3>Tespit edilen dönemler</h3><div id="don">${donHtml()}</div></div></section>`;
  h+=cevapOzet();return h}
 function cevapOzet(){const c=S.cevap;if(!c)return'';const n=(a,ad)=>`<span class="chip ${a.length?'ok':'wr'}">${ad}: <b>${a.length}</b></span>`;
- return `<section><div class="card"><h3>Cevap yazısı tespit edildi</h3><p class="note" style="margin:0 0 8px">Bu PDF, e-Karşıt’a daha önce yüklenmiş verileri içeriyor. 1-7. tablolardaki bilgiler sonraki adımlarda “Cevap yazısı” kaynağı olarak kullanılır; eksik olanları ilgili adımlarda belge, Excel veya elle girişle tamamlarsınız.</p><div class="chips">${n(c.ortaklar,'1 Ortak')}${n(c.defterler,'2 Defter')}${n(c.isciler,'4 Çalışan sayısı')}${n(c.kdv,'5 KDV')}${c.imalatciYok?'<span class="chip ok">6 İmalatçı değildir</span>':n(c.imalatcilar,'6 İmalatçı')}${n(c.tedarikciler,'7 Tedarikçi')}</div>${c.uyari.map(u=>`<div class="msg wr" style="margin-top:8px">${esc(u)}</div>`).join('')}</div></section>`}
+ return `<section><div class="card"><h3>Cevap yazısı tespit edildi</h3><p class="note" style="margin:0 0 8px">Bu PDF, e-Karşıt’a daha önce yüklenmiş verileri içeriyor. 1-7. tablolardaki bilgiler sonraki adımlarda “Cevap yazısı” kaynağı olarak kullanılır; eksik olanları ilgili adımlarda belge, Excel veya elle girişle tamamlarsınız.</p><p style="margin:0 0 6px"><b>Ne yapmak istiyorsunuz?</b></p><div class="chips">${n(c.ortaklar,'1 Ortak')}${n(c.defterler,'2 Defter')}${n(c.isciler,'4 Çalışan sayısı')}${n(c.kdv,'5 KDV')}${c.imalatciYok?'<span class="chip ok">6 İmalatçı değildir</span>':n(c.imalatcilar,'6 İmalatçı')}${n(c.tedarikciler,'7 Tedarikçi')}</div>${c.uyari.map(u=>`<div class="msg wr" style="margin-top:8px">${esc(u)}</div>`).join('')}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="${S.cevapSecim==='arsiv'?'btn':'btn2'}" id="bCvArs">${S.cevapSecim==='arsiv'?'✓ ':''}Bilgileri arşiv dosyası için kullan</button><button class="${S.cevapSecim==='tamamla'?'btn':'btn2'}" id="bCvTam">${S.cevapSecim==='tamamla'?'✓ ':''}Bilgilerdeki eksikleri tamamla</button></div><p class="note" style="margin:8px 0 0">“Arşiv için kullan” doğrudan 9. adıma (kapsam ve çıktı) geçer; “eksikleri tamamla” adım adım akışla devam eder.</p></div></section>`}
 /* ---------- Adım 2: Arşiv ---------- */
 const durum=v=>v?'<span class="chip ok">Arşivde var</span>':'<span class="chip er">Arşivde yok</span>';
 const sayi=v=>v==null?'':fmtTR(v);
@@ -263,6 +263,7 @@ function arsivPlan(){const p=efPdf(),D=donemler(p),ef=efektif(),yil=[...new Set(
  return{ef,sayfalar:yil.map(y=>{const es=eski.find(s=>s.yil===y),m=sayfaModeli(ef,y);return{yil:y,yeniSayfa:!es,fark:fark(es?{ortak:es.ortaklar,defter:es.defterler,isci:es.isciler,kdv:es.kdv,imalatci:es.imalatcilar,tedarikci:es.tedarikciler}:null,m)}})}}
 function arsivBolum(){const pl=arsivPlan(),sil=pl.sayfalar.reduce((a,s)=>a+Object.values(s.fark).reduce((b,o)=>b+o.silinen,0),0),var_=pl.sayfalar.some(s=>!s.yeniSayfa);
  let h=`<section><h2>Güncellenmiş arşiv</h2><p class="note" style="margin:0 0 10px">${S.ars?`Mevcut arşiv (<b>${esc(S.arsAd)}</b>) bu tutanağın verileriyle güncellenir. Yalnızca etkilenen yıl sayfaları yazılır, diğer sayfalara dokunulmaz.`:'Arşiv yüklenmedi: bu tutanağın verilerinden <b>yeni bir arşiv</b> oluşturulur.'} Faturalar tablosu arşive yazılmaz.</p>`;
+ if(S.cevapSecim==='arsiv'&&!S.ars)h+='<div class="msg in">Mevcut bir arşiv dosyanızı güncellemek istiyorsanız önce 2. adımda yükleyin; yüklemezseniz bu bilgilerden yeni bir arşiv oluşturulur.</div>';
  if(var_)h+='<div class="msg wr">Güncellenecek yıl sayfaları yeniden yazılır; sayfadaki bilinen bölümler (ortak, defter, işçi, KDV, imalatçı, tedarikçi) dışındaki içerik (ek notlar vb.) korunmaz.</div>';
  if(sil)h+=`<div class="msg er">${sil} mevcut arşiv kaydı yeni sayfada yer almıyor ve silinecek (örneğin tedarikçi seçimi değiştiği veya satır çıkarıldığı için). Aşağıdaki tabloda “Silinen” sütununu kontrol edin.</div>`;
  h+=`<div class="tw"><table><thead><tr><th>Sayfa</th><th>Bölüm</th><th class="n">Eklenen</th><th class="n">Değişen</th><th class="n">Aynı</th><th class="n">Silinen</th></tr></thead><tbody>`+pl.sayfalar.map(s=>Object.entries(s.fark).map(([k,o],i)=>`<tr><td>${i?'':`<b>ARŞİV ${s.yil}</b> <span class="chip ${s.yeniSayfa?'ok':'wr'}">${s.yeniSayfa?'yeni sayfa':'güncellenecek'}</span>`}</td><td>${ARS_AD[k]}</td><td class="n">${o.eklenen||'—'}</td><td class="n${o.degisen.length?' fark':''}">${o.degisen.length||'—'}</td><td class="n">${o.ayni||'—'}</td><td class="n${o.silinen?' fark':''}">${o.silinen||'—'}</td></tr>`).join('')).join('')+'</tbody></table></div>';
@@ -310,7 +311,7 @@ async function yukle(tur,file){if(!file)return;
   catch(e){console.error(e);st.X={ad:file.name,ok:false,satirlar:[],uyari:[{k:'er',t:hataMetni(e)}]}}
   msg('');return render()}
  msg(`${esc(file.name)} okunuyor…`);
- try{if(t==='pdf'){const r=parseEK(await pdfItems(file));if(!r.inv.length&&!r.kf.adi)throw new Error('Bu dosyada e-Karşıt tutanak bilgileri bulunamadı. Doğru PDF’i seçtiğinizden emin olun.');S.pdf=r;S.pdfAd=file.name;S.onay={};S.st={};{const cv=parseCevap(await pdfItems(file));S.cevap=cv?cevapDonemAta(cv,donemler(r).fatura):null;if(S.cevap&&S.cevap.imalatciYok)ST('imalatci').Uyg=true}}
+ try{if(t==='pdf'){const r=parseEK(await pdfItems(file));if(!r.inv.length&&!r.kf.adi)throw new Error('Bu dosyada e-Karşıt tutanak bilgileri bulunamadı. Doğru PDF’i seçtiğinizden emin olun.');S.pdf=r;S.pdfAd=file.name;S.onay={};S.st={};{const cv=parseCevap(await pdfItems(file));S.cevap=cv?cevapDonemAta(cv,donemler(r).fatura):null;S.cevapSecim=null;S.cevapOto=false;if(S.cevap&&S.cevap.imalatciYok)ST('imalatci').Uyg=true}}
   else{const a=await arsivOku(file);if(!a.sayfalar.length)throw new Error('Dosyada “ARŞİV YYYY” adlı sayfa bulunamadı. Arşiv dosyasını seçtiğinizden emin olun.');S.ars=a;S.arsAd=file.name}
   msg('')}
  catch(e){console.error(e);msg(esc(hataMetni(e)),'er')}
@@ -374,6 +375,8 @@ document.addEventListener('click',async e=>{const b=e.target;
   else if(op==='fkaydet'){const v=faturaElleOku(key);if(v){st.El[key]=v;st.Edit=null;st.Err='';st.Taslak=null}}
   else if(op==='kaydet'){const v=elleOku(cfg,key);if(v){st.El[key]=v;st.Sec[key]='elle';st.Edit=null;st.Err='';st.Taslak=null}}
   return render()}
+ if(b.id==='bCvArs'){S.cevapSecim='arsiv';S.cevapOto=true;for(let n=1;n<=8;n++)S.onay[n]=true;return git(9)}
+ if(b.id==='bCvTam'){S.cevapSecim='tamamla';if(S.cevapOto){for(let n=2;n<=8;n++)delete S.onay[n];S.cevapOto=false}S.onay[1]=true;return git(2)}
  if(b.id==='bGeri')return git(S.adim-1);
  if(b.id==='bArsKaldir'){S.ars=null;S.arsAd='';S.arsBuf=null;delete S.onay[2];return render()}
  if(b.id==='bIleri'){S.onay[S.adim]=true;return git(S.adim+1)}
