@@ -1,47 +1,26 @@
 # Karşıt Doldur — Yapılacaklar
 
-> Proje çalışma defteri. Geliştirmeler `develop` dalında yapılır; `main`'e aktarım yalnızca açıkça istenince.
+> Geliştirmeler `develop` dalında yapılır; `main`'e aktarım yalnızca açıkça istenince.
+> Her adım kullanıcı testi ve onayıyla tamamlanır; onaylanmadan sonraki adıma geçilmez.
 
-## Bekleyen girdiler (test için)
+## Adımlar
 
-- [ ] Örnek arşiv dosyası (`ARSIV_…xlsx`; veriler anonimleştirilebilir)
-- [ ] KDV beyannamesi PDF, KDV tahakkuk PDF, muhtasar PDF
-- [ ] e-Berat dosyası (XML veya PDF)
-- [ ] Muavin (PDF veya Excel) ve e-fatura XML örnekleri
-- [ ] Birden fazla e-Karşıt PDF örneği (çok fatura / çok sayfa)
+- [x] **Adım 1 — e-Karşıt PDF** (onaylandı): salt okunur gösterim; Ç telefon notu; 4 farklı PDF'te doğrulandı
+- [x] **Adım 2 — Arşiv** (onaylandı): yalnızca bu tutanağın gerektirdiği kayıtlar, "Arşivde var/yok"; VKN uyuşmazsa devam edilemez
+- [x] **Adım 3 — KDV** (onaylandı): belge, yüklenen KDV Excel'i veya elle giriş; okunan değerleri elle düzeltme; kaynak seçimi; uyarılar
+- [x] **Adım 4 — Muhtasar** (onaylandı): beyanname PDF (çoklu), yüklenen Excel, elle giriş/düzeltme
+- [x] **Adım 5 — e-Berat ve yasal defterler** (onaylandı): e-Berat XML/PDF, yüklenen Excel, elle giriş (Envanter dahil), "berat süresi dolmadı"
+- [ ] **Adım 6 — Satış muavini (120)** (geliştirildi; kullanıcı testi bekliyor): fatura eşleştirme, defter kayıt tarihi, yevmiye no, tahsilatlardan ödeme şekli önerisi (FIFO), yüklenen Excel, elle düzenleme
+- [ ] **Adım 7 — Tedarikçi** (geliştirildi; kullanıcı testi bekliyor): İndirilecek KDV Listesi (xls/xlsx), 191 muavin doğrulaması, e-fatura XML (vergi dairesi, döviz), e-Karşıt Excel'i, VKN bazlı vergi dairesi, dönem başına en yüksek 10 alım, elle düzenleme/ekleme/çıkarma, "uygulanamaz"
+- [ ] **Adım 8 — Ortak ve imalatçı** (geliştirildi; kullanıcı testi bekliyor): arşiv/Excel/elle; pay oranı toplamı kontrolü; "imalatçı değildir"
+- [ ] **Adım 9 — Kapsam ve çıktı** (geliştirildi; kullanıcı testi bekliyor): kapsam kartları, 7 Excel (ZIP), **güncellenmiş arşiv** (.xlsx; önizleme, fark raporu)
+- [ ] **e-Berat yükleme tercihi** (geliştirildi; kullanıcı testi bekliyor): aylık/3 aylık yükleme ve gelir/kurumlar vergisi mükellefi seçimi; “süresi dolmadı” için son yükleme tarihi GİB notuna göre hesaplanır
+- [x] Arayüz metinlerinde “Ç) mükellef” → “karşıt yapılan ilgili mükellef”
+- [x] "Uygulanamaz" durumu: tedarikçi (Adım 7) ve imalatçı (Adım 8)
+- [ ] Dolu cevap PDF'inden arşive aktarma (isteğe bağlı)
 
-## Aşama 1 — Yükleme ve PDF analizi
+## Yapıldı
 
-- [ ] Proje iskeleti (`index.html`, `css/`, `js/`) ve ekarsit'ten gereken modüllerin bağımlılık haritası
-- [ ] Toplu yükleme ve belge türü tanıma
-- [ ] e-Karşıt PDF analizi (A, B, C, Ç, sözleşme, fatura tablosu)
-- [ ] Dönem kapsamı (fatura ayı, önceki ay, yıl)
-
-## Aşama 2 — Arşiv ve eksik paneli
-
-- [ ] Arşiv okuma ve VKN eşleşme kontrolü
-- [ ] Tablo bazında arşiv/eksik durumu ve eksik paneli
-
-## Aşama 3 — Belgelerden tamamlama
-
-- [ ] KDV beyanname + tahakkuk birleştirme
-- [ ] Muhtasar çalışan sayısı
-- [ ] e-Berat (Yevmiye/Kebir)
-- [ ] Muavin ile fatura bilgileri (kayıt tarihi, yevmiye no, ödeme şekli)
-- [ ] Tedarikçi (aylık en yüksek 10 alım)
-
-## Aşama 4 — Çıktı
-
-- [ ] 7 Excel (gerçek şablon biçimi, tutarlar gerçek sayı)
-- [ ] Arşiv güncelleme (fark onayı, ARŞİV dışı sayfaları koruma)
-- [ ] ZIP çıktısı
-
-## Aşama 5 — Belgeler ve test
-
-- [ ] Geliştirici dokümanı
-- [ ] Uçtan uca test (gerçek örneklerle)
-- [ ] Mobil/tablet kontrolü
-
-## Tamamlananlar
-
-- [x] Plan hazırlandı (`PLAN.md`)
+- [x] Plan, repo yapısı, test betikleri (`tests/run.js`, `tests/cikti.js`, `tests/pdf_ozet.js`)
+- [x] e-Karşıt PDF okuyucu: 4 firma/yıl, toplam doğrulaması, fatura tablosu başlık sızıntısı giderildi
+- [x] Arşiv okuyucu, kapsam hesabı, 7 Excel üretimi (gerçek şablon biçimi), ZIP

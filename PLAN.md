@@ -87,7 +87,7 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 - Başlıklar: `A)` YMM, `B)` tasdik hizmeti verilen mükellef, sözleşme tablosu, `C)` nezdinde incelenen mükellefin mal/hizmet teslim ettiği mükellef, `Ç)` nezdinde incelenen mükellef. Başlık verinin **üstünde**; etiket sütunu x<100, değer sütunu x≥100, değerler etiket satırına dikey ortalı (çok satırlı değerler için en yakın etiket).
 - Sözleşme tablosu 5 sütun: başlangıç, bitiş, tarih, seri-sıra no, sisteme girildiği tarih. Fatura dönemini kapsayan sözleşme seçilir.
 - Fatura tablosu (bölüm 3): uzun fatura numarası iki satıra bölünebilir (konuma göre birleştirilir). `Faturanın Tutarı` = matrah (KDV oranıyla doğrulandı). Satırlar tarih hücresine en yakın konumla gruplanır.
-- Prototip: `prototip/e_karsit_pdf_konum_ayristirici.js`. ekarsit'teki metin tabanlı `parseTutanak` yedek olarak kalır.
+- Kod: `js/02_ekarsit_pdf.js` (iki farklı PDF'te doğrulandı). ekarsit'teki metin tabanlı `parseTutanak` gerekirse yedek olarak kullanılır.
 
 ## ekarsit'ten yeniden kullanılacak parçalar
 
@@ -102,7 +102,123 @@ Excel'ler, ekarsit'te gömülü olan **gerçek e-Karşıt şablonlarından** tü
 | `12_efatura_tools.js`, `13_xml_kdv_listesi.js` | tedarikçi için e-fatura XML |
 | `vendor/` | pdfjs, exceljs, xlsx |
 
-Modüller global değişken ve fonksiyonlara bağlı; kopyalarken bağımlılık haritası çıkarılacak, kullanılmayan UI/menü kodu alınmayacak.
+**Karar (güncel):** ekarsit modülleri UI ve global duruma sıkı bağlı olduğundan toptan kopyalanmıyor. Bu repoda küçük, test edilebilir modüller yazılıyor (`js/01_ortak.js` … `js/04_kapsam.js`; Node'da `tests/run.js` ile denenir). ekarsit'ten yalnızca şunlar taşınacak: 7 gömülü e-Karşıt şablonu, belge ayrıştırıcıları (KDV beyanname/tahakkuk, muhtasar, e-berat) ve vendor kütüphaneleri.
+
+## Girdi türleri ve adımlar (örnek veri setine göre)
+
+Proje tek bir firmaya/döneme özel değildir; her kullanıcı kendi e-Karşıt PDF'iyle ve kendi belgeleriyle çalışır. Her adım ayrı onayla açılır (arayüzde de "Onayla ve devam et").
+
+| Adım | Girdi | Beslediği tablo | Notlar |
+|---|---|---|---|
+| 1 | e-Karşıt tutanak PDF'i | A, B, C, Ç, sözleşme, 3. fatura listesi | 4 farklı PDF'te doğrulandı; salt okunur (A, B, C, Ç Excel'lere aktarılmaz). Ç telefonu PDF'te boş gelir, e-Karşıt'a her tutanakta elle girilir |
+| 2 | Arşiv `.xlsx` | 1, 2, 4, 5, 6, 7 | Yıl bazlı sayfalar; karışık sayı biçimleri. Arşiv Ç) mükellefe ait olmalı: VKN uyuşmazsa adım onaylanamaz. Arşiv isteğe bağlı |
+| 3 | KDV beyannamesi + tahakkuk fişi | 5 KDV | **Eski** (1015 A) ve **yeni** (Dijital VD) biçim. Okuyucular ekarsit'ten alındı (`js/08_kdv.js`). Belgenin VKN'si Ç) mükellefle eşleşmeli ve dönemi gerekli dönemler içinde olmalı; aksi halde kullanılmaz. Belge değerleri arşivden farklıysa fark gösterilir, kaynak seçilir (varsayılan belge) |
+| 4 | Muhtasar ve prim hizmet beyannamesi | 4 Çalışan sayısı | 22 sayfalık örnek |
+| 5 | e-Berat (XML veya görüntüleme PDF'i) | 2 Yasal defter | Yevmiye ve Kebir beratı (ETTN Açıklama alanına yazılır); Envanter Defteri arşiv/Excel/elle. `berat.xslt` yalnızca görüntüleme stili |
+| 6 | Satış muavini (120 alıcılar) | 3 Fatura: defter kayıt tarihi, yevmiye no, ödeme şekli | Fatura no ile eşleşir; ödeme şekli tahsilatlardan FIFO ile önerilir (aşağıya bakın) |
+| 7 | İndirilecek KDV listesi (`.xls`/`.xlsx`), 191 muavin (`.xlsx`), e-fatura XML | 7 Tedarikçi | Dönem başına en yüksek 10 alım (matrah); ayrıntı aşağıda |
+| 8 | Arşiv/Excel/elle | 1 Ortaklık, 6 İmalatçı | Pay toplamı %100 kontrolü; "imalatçı değildir" (uygulanamaz) |
+| 9 | Kapsam ve çıktı | 7 Excel + güncel arşiv | |
+
+**Referans:** "Karşıt İnceleme Tutanağı Cevabı.PDF", yüklemeden sonra e-Karşıt'ın tabloları nasıl gösterdiğini içerir (1-7. tablolar dolu). Çıktıyı doğrulamak için ve ileride "dolu cevap PDF'inden arşive aktarma" için kaynak olabilir.
+
+**Genel kurallar (örneklerden):**
+- Her tablo her firmada gerekmez: cevap PDF'inde "İmalatçı değildir." yazıyor. Eksik/gerekli hesabında "uygulanamaz" seçeneği olmalı.
+- Defterler firmaya göre değişir: e-Defter (GİB, berat no) veya noter tasdikli kağıt defter (Yevmiye Defteri, tasdik makamı/no).
+- Aynı belge türünün farklı biçimleri olabilir (KDV eski/yeni); okuyucular biçimi otomatik tanımalı.
+- Tek bir yüklemede farklı firmaların belgeleri karışabilir; her belgede VKN kontrol edilip tutanaktaki Ç) mükellefle eşleşmeyenler uyarılmalı.
+
+## KDV belgeleri (Adım 3) — kurallar
+
+- Belge türü başlıktan tanınır (beyanname / tahakkuk fişi); büyük-küçük harf eşleşmesi Türkçe kurallarla yapılır (JavaScript'te `/i` bayrağı İ/i'yi eşleştirmez).
+- Eski ve yeni biçimde alanlar farklı adlarla geçer (`Matrah Toplamı` / `Toplam Matrah`); yeni biçimde alan değeri etiketin ilk satırında olabilir. Yeni biçimde "Özel matrah" satırı yoksa değer 0 alınır.
+- Tahakkuk no yalnızca tahakkuk fişinden gelir (ör. `2026082201Gen0000015`, `2026082401OY90000043`); beyanname ile aynı dönemde eşleştirilir.
+- Aynı döneme birden fazla beyanname yüklenirse onay zamanı en yeni olan alınır (düzeltme beyannamesi senaryosu).
+- Kaynaklar ve öncelik: **elle girilen > belge > yüklenen Excel > arşiv**. Kaynaklar arasında fark varsa sarı hücrelerle gösterilir ve kullanıcı kaynağı seçer (varsayılan en öncelikli). Hiçbir kaynak sessizce ezilmez.
+- **Elle düzeltme / giriş:** her dönem kartında "Değerleri düzenle" (okunan değerlerle dolu form) veya "Elle gir" (boş form). Hatalı sayıda yazılanlar korunur. Elle girilen satır "Elle" kaynağı olur, silinebilir.
+- **Tutarlılık uyarıları:** Toplam KDV ≠ hesaplanan + ilave KDV; tahakkuk no boş. (Ödenecek/devreden arasındaki ilişki iade ve mahsup nedeniyle sabit olmadığından denetlenmez.)
+- **Excel yükleme (`js/09_excel_oku.js`):** başlık satırı 7 e-Karşıt şablonuyla karşılaştırılır (`excelTani`). Reddedilir: şablonla eşleşmeyen dosya, başka tabloya ait dosya (hangisi olduğu söylenir), dosya adındaki VKN Ç) mükellefle eşleşmiyorsa, veri satırı yoksa, hiçbir satır gerekli dönemlere ait değilse. Uyarıyla kabul edilir: dosya adında VKN yok (doğrulanamadı), yinelenen dönem (sonuncusu), gerekli dönemler dışındaki satırlar, sayı olmayan/boş hücreler (0 alınır), boş tahakkuk no, dönem biçimi bozuk satırlar. Dosyada olmayan gerekli dönemler bilgi olarak belirtilir.
+- Birleştirilmiş ("efektif") veri: belgelerden gelen satırlar arşiv satırlarının üstüne yazılır; kapsam, Excel ve ileride arşiv güncellemesi bu veriyi kullanır.
+
+## Kaynaklı adımlar altyapısı (Adım 3 ve sonrası)
+
+Her adım aynı kalıbı izler (`CFG` tanımı + ortak çizim, `js/90_arayuz.js`): belge PDF'leri (çoklu), daha önce hazırlanmış e-Karşıt Excel'i (`tabloExcelOku`, `js/09_excel_oku.js`), elle giriş/düzeltme, arşiv. Kaynak önceliği elle > belge > Excel > arşiv; kaynaklar farklıysa sarı hücreler ve kaynak seçimi. Yeni adım eklemek için: `SPEC` (Excel sütunları), `CFG` (anahtarlar, sütunlar, belge okuyucu, kontrol) tanımlamak yeterlidir. Dosya adları: `01-09` yardımcılar/okuyucular, `90_arayuz.js` arayüz (yeni modüller 10-89 arasına eklenir).
+
+## Muhtasar (Adım 4) — kurallar
+
+- Belge: "Muhtasar ve Prim Hizmet Beyannamesi" (okuyucu ekarsit'ten, `js/11_muhtasar.js`). Çalışan işçi sayısı = "Çalışan Bilgisi" satırlarındaki Toplam Çalışan Sayısı toplamı; vergi dairesi yalnızca ad (örn. KARAMAN). Şablonun örnek satırı (`07.2026 / 76 / KARAMAN`) örnek belgeyle birebir uyuşur.
+- Yalnızca fatura dönemleri gerekir (önceki dönem değil).
+- Aylık beyannamede tek dönem; **3 aylık beyannamede** satır etiketindeki "N. Ay" ile ay bazında toplanır (bu biçim için örnek belge yok; kullanıcıya doğrulama uyarısı gösterilir).
+- Uyarılar: belge Ç) mükellefe ait değil / dönemi dışında / muhtasar değil / satırlar okunamadı; beyannamenin vergi dairesi Ç) vergi dairesinin ilk kelimesini içermiyorsa; sayı 0 veya vergi dairesi boş; elle girişte negatif/tam sayı olmayan değer.
+
+## e-Berat ve yasal defterler (Adım 5) — kurallar
+
+- **Anahtarlar:** her fatura ayı için `Yevmiye AA.YYYY` ve `Kebir AA.YYYY`, her fatura yılı için `Envanter YYYY`. Excel/arşiv satırları nev'i ve dönemden bu anahtara çevrilir (`KD.defterAnahtar`).
+- **e-Berat XML** (`entriesType`, `periodCoveredStart/End`, `creationDate`, `uniqueID` = tekil no ve ETTN) ve **e-Belge Görüntüleme PDF'i** okunur (PDF okuyucusu ekarsit'ten). Satır: nev'i `e-Defter Yevmiye Defteri` / `e-Defter Defteri Kebir`, makam `GİB`, tarih = oluşturma tarihi, no = tekil no, **Açıklama = ETTN** (UUID).
+- **Aylık berat gerekir:** başlangıç ve bitiş dönemi aynı ay olmalı; çok aylı berat kullanılamaz.
+- **Süre kuralı (ekarsit ile aynı, "temel kural"):** ilgili ayı izleyen ikinci ayın son günü. Süre dolmamışsa kartta "Berat süresi dolmadı (yüklenmedi) olarak işaretle" seçeneği standart açıklama metniyle satır üretir (tarih ve no boş). Resmî süre uzatımları ayrıca geçerli olabilir; uyarı metninde belirtilir.
+- **Uyarılar:** ETTN eksik; tasdik/berat no veya tarih boş; belge Ç) mükellefe ait değil / tanınmadı / çok aylı; Excel'de tanınmayan defter türü; elle girişte nev'i-dönem anahtarla uyuşmazlığı.
+
+## Satış muavini ve fatura bilgileri (Adım 6) — kurallar
+
+- **Muavin** (120 Alıcılar PDF): `js/13_muavin.js`; satır okuyucusu ekarsit'ten (`parseMuavinPdfText`). Bir PDF'te birden fazla hesap olabilir (`HESAP KODU ADI : 120.xx / ÜNVAN`); devir = "NAKLEDİLEN TOPLAM" borç − alacak.
+- **Eşleştirme:** fatura numarası, muavin açıklamasında aranır (harf/rakam dışı karakterler yok sayılır, en az 4 karakter). **Defter kayıt tarihi** = muavin satırı tarihi, **yevmiye no** = muavin YEV.NO. Borç tutarı fatura matrah+KDV ile karşılaştırılır (fark, birden fazla eşleşme ve bulunamayan fatura uyarı olur).
+- **Ödeme şekli referansı** (e-Karşıt şablonu): 1 Nakit, 2 Banka, 3 Çek, 4 Senet, 5 **C/H (cari hesap = ödenmemiş)**, 6 Diğer. Çıktıda birden fazla ise kod sırasıyla virgülle birleştirilir (`Banka, C/H`).
+- **Öneri (FIFO):** tahsilat (alacak) satırları, en eski açık borçtan başlayarak borç satırlarına dağıtılır; devir bakiyesi ilk açık borçtur. Yöntem açıklamadan çıkarılır: ÇEK → Çek, SENET → Senet, NAKİT/KASA → Nakit, BANKA/HAVALE/EFT/VİRMAN/KREDİ KARTI/POS → Banka, diğerleri → Diğer ("belirsiz" uyarısı). Faturanın ödenmemiş kalan kısmı varsa "C/H" eklenir. Bu bir çıkarımdır: tahsilatın hangi faturaya ait olduğu muavinde yazmaz; ekranda dağıtım ayrıntısı gösterilir ve kullanıcı düzeltebilir.
+- **Alan başına kaynak önceliği:** elle > muavin > yüklenen Excel > tutanak PDF'i. Kaynaklar farklıysa uyarı.
+- **Excel yükleme (faturalar tablosu):** fatura numarasına göre eşleşir. Reddedilir: yanlış tablo, dosya adındaki VKN farklı. Uyarı: VKN doğrulanamadı, tutanakta olmayan fatura, bulunmayan fatura, tutar farkı, boş kayıt tarihi/yevmiye no/ödeme şekli, referans dışı ödeme değeri, yinelenen fatura no.
+
+## Tedarikçi (Adım 7) — kurallar
+
+- **Kaynaklar ve rolleri** (`js/14_tedarikci.js`, `.xls` için SheetJS `vendor/xlsx.full.min.js`):
+  - *İndirilecek KDV Listesi:* alım listesi (fatura tarihi/no, satıcı ünvanı, VKN, KDV hariç tutar, KDV, GGB tescil no). Vergi dairesi **yoktur**. Dönem, "İndirim hakkının kullanıldığı KDV dönemi" sütunundan (yoksa fatura tarihinden).
+  - *191 muavin:* yalnızca KDV tutarı (fatura bazında toplanır). Ana kaynak değil, **doğrulama**: listedeki/seçilen KDV ile karşılaştırılır. Liste yoksa yedek aday kaynağıdır (KDV'ye göre sıralanır, matrah eksik kalır).
+  - *e-fatura/e-arşiv XML (UBL-TR):* satıcı VKN, ünvan, **vergi dairesi** (`VD (İL)` biçiminde), fatura no/tarih, matrah = `TaxExclusiveAmount` (iskontolu), KDV = `TaxTotal`. Döviz cinslerinde `CalculationRate` ile TL'ye çevrilir; kur yoksa uyarı. Alıcı VKN Ç) mükellefle eşleşmezse kullanılmaz. Tevkifatlı faturada uyarı.
+  - *e-Karşıt Excel'i / arşiv:* daha önce seçilmiş satırlar.
+- **Seçim (dönem başına):** (1) yüklenen e-Karşıt Excel'i varsa satırlar olduğu gibi; (2) yoksa liste/191'den **en yüksek 10 alım** (matrah, 191'de KDV); (3) yoksa arşiv; (4) yoksa XML'ler. Elle eklenenler her zaman girer, çıkarılanlar çıkar (geri alınabilir).
+- **Alan öncelikleri:** elle > XML > Excel > liste > 191 > arşiv. **Vergi dairesi VKN bazında taşınır:** aynı VKN'nin başka kayıtta/XML'de/kullanıcı eşlemesinde bulunan vergi dairesi diğer satırlara uygulanır.
+- **Uyarılar:** eksik zorunlu alan (ünvan, VKN, vergi dairesi, tarih, no, matrah, KDV); 191'de bulunamadı / KDV farklı; döviz ve tevkifat; Excel için yanlış tablo, yanlış VKN (dosya adı), dönem dışı satır, 10'dan fazla satır, bozuk tarih/sayı.
+- **"Uygulanamaz":** tedarikçi tablosu boş üretilir ve kapsamda tamam sayılır.
+- **Varsayım (doğrulanmadı):** vergi dairesi yazımı şablon örneğine uyularak `ADI (İL)`; XML'de il adı varsa eklenir.
+
+## Ortak ve imalatçı (Adım 8) — kurallar
+
+- **Kaynaklar:** arşiv; e-Karşıt Excel'i yüklenirse arşivin yerine **olduğu gibi** kullanılır; elle ekleme/düzenleme/çıkarma (geri alınabilir). Satırlar kaynağa göre kimliklenir (`a0…`, `x0…`, `e1…`); düzenlemeler satır kimliğine bağlıdır.
+- **Ortaklık uyarıları:** zorunlu alanlar (ünvan, VKN, il, vergi dairesi, pay), pay sayı değil, **pay oranları toplamı %100 değil**. Çıktıda pay 4 ondalıkla yazılır (`100.0000`); şablon örneğinde açıklama görev bilgisidir (örn. GENEL MÜDÜR).
+- **İmalatçı:** belge türü `Sanayi Sicil Belgesi` veya `Diğer`; **kapasite raporu için tür "Diğer", açıklama "Kapasite raporu"** (şablon örneği). Firma imalatçı değilse "imalatçı değildir" seçilir (cevap PDF'inde "İmalatçı değildir." yazar): tablo boş üretilir, kapsamda tamam sayılır.
+- **Excel yükleme:** yanlış tablo, dosya adındaki VKN, boş zorunlu alan, bozuk belge tarihi/pay uyarıları.
+
+## Güncellenmiş arşiv (Adım 9) — kurallar
+
+- **Neyi yazar:** tutanağın etkilediği yıllar (fatura ve KDV dönemleri ile Envanter yılı). Her etkilenen yıl için `ARŞİV YYYY` sayfası **etkin (birleştirilmiş) veriden yeniden yazılır**; diğer sayfalara ve ARŞİV dışı sayfalara dokunulmaz. Sayfa yoksa yeni oluşturulur (mükellef bloğu Ç) bilgilerinden), varsa mevcut mükellef bloğu korunur.
+- **Etkin veri:** arşiv satırları, belge/Excel/elle ile tamamlananların üstüne yazılmış hâlidir. Yıl dağılımı: defter → başlangıç yılı; işçi, KDV, tedarikçi → dönem yılı; ortak ve imalatçı yıl sayfasına bağlı değil (etkilenen sayfalara güncel liste yazılır). **Faturalar yazılmaz.**
+- **Anahtarlar** (aynı anahtar = üstüne yazar, sonuncusu kazanır): ortak ad+VKN; defter nev'i+başlangıç+bitiş; işçi/KDV dönem; imalatçı ad+VKN+belge no; tedarikçi dönem+no+ad.
+- **Biçim:** arşivin mevcut düzeni (B3:C7 mükellef bloğu, beyaz-koyu bölüm başlığı, açık gri sütun başlığı); tutarlar TR metin (`24.602.091,47`); kodlar okunur metne çevrilir (`E_DEFTER_YEVMIYE_DEFTERI` → `e-Defter Yevmiye Defteri`, `SANAYI_SICIL_BELGESI` → `Sanayi Sicil Belgesi`).
+- **Ekran raporu:** sayfa başına bölüm bazında Eklenen / Değişen / Aynı / Silinen; değişen kayıtların eski-yeni değeri; yeniden yazılan sayfada bilinen bölümler dışı içeriğin korunmayacağı uyarısı; silinecek kayıt varsa kırmızı uyarı.
+- **Dosya adı:** yüklenen arşivin adı + `_guncel`; arşiv yoksa `ARSIV_<ÜNVAN>`.
+
+## Bulgular (gerçek örnek dosyalarla, Aşama 1-2)
+
+- **Arşiv, Ç) mükellefe aittir.** Örnek arşivin VKN'si yeni PDF'teki Ç) VKN'siyle eşleşti; eski PDF'te eşleşmeyince uyarı üretildi.
+- **A bölümünde ek satır olabilir:** "YMM ŞİRKETİ VERGİ KİMLİK NUMARASI / ÜNVANI". Etiket listesinde yoksa değeri bir önceki alana (telefon) karışıyor.
+- **Sözleşme tablosu birden fazla olabilir** ("KDV iadesi tasdik dönemi" ve "tasdik dönemi"); sütun başlıkları tablodan tabloya farklı yazılıyor, sütunlar başlık merkezinden bulunuyor.
+- **Sayı alanı** her zaman "EKARSIT" içermiyor (örn. `2026-723`); "Sayı" etiketinin yanındaki değer alınıyor.
+- **TOPLAM satırı:** tutar etiketle aynı hizada değil (6 birim yukarıda); ayrı bir bant olarak dışlanmazsa son faturanın KDV'sine karışıyor. PDF toplamı ile satır toplamı karşılaştırılıyor ve uyuşmazlık uyarı olarak çıkıyor.
+- **Arşivde sayı biçimleri karışık:** aynı sütunda hem sayı hem `29.603.687,27` gibi metin var. Okurken sayıya normalize ediliyor; çıktıda gerçek sayı yazılacak.
+- **ETTN**, arşivde e-Defter satırlarının "Açıklama" sütununda tutuluyor.
+- **Arşiv yıl bazlı:** örnek arşivde yalnızca `ARŞİV 2025` var, tutanak ise 2026 (Temmuz-Ağustos) faturaları içeriyor. Bu durumda defter, muhtasar, KDV ve tedarikçi tablolarının tamamı yeni belgelerden tamamlanmalı; yalnızca ortaklık ve imalatçı arşivden gelir.
+- **Arşivde bir e-Defter satırında ETTN biçimi bozuk** (`40ac-80db-5b29-…`, ilk blok kısa); okuyucu değeri olduğu gibi aktarır.
+- **Arşivde tedarikçi bölümü boş** (yalnızca başlık); tedarikçi verisi e-fatura XML'den veya elle gelecek.
+
+## Excel çıktı kuralları (uygulandı)
+
+- Şablon yalnızca başlık/biçim kaynağı; örnek satırlar taşınmaz. Fatura dosyasındaki "Ödeme Şekli Referans" sayfası aynen kopyalanır.
+- Metin sütunları metin (`@`); tutar sütunları (fatura matrah/KDV, KDV tablosu, tedarikçi matrah/KDV) gerçek sayı (`#,##0.00`).
+- Defter türü ve belge türü kod biçiminde yazılır: arşivdeki `e-Defter Yevmiye Defteri` → `E_DEFTER_YEVMIYE_DEFTERI`, `ENVANTER DEFTERİ` → `ENVANTER_DEFTERI`, `Sanayi Sicil Belgesi` → `SANAYI_SICIL_BELGESI`, `Diger` → `DIGER`.
+- Pay oranı 4 ondalıkla yazılır (`100` → `100.0000`).
+- Faturalar tablosu "tamam" sayılması için her faturada defter kayıt tarihi, yevmiye no ve ödeme şekli dolu olmalı; PDF'te bunlar boş geldiğinde muavinden tamamlanacağı belirtilir.
+- Çıktıya yalnızca kapsama giren satırlar girer: gerekli defterler, fatura dönemleri için işçi sayıları, KDV dönemleri, dönem başına en yüksek 10 tedarikçi alımı.
+- Arşivde tedarikçi satırı sütunları: A sıra no, B ad, C VKN, D vergi dairesi, E tarih, F seri, G no, H matrah, I KDV, J gümrük tarihi, K gümrük tescil no.
 
 ## Riskler ve kararlar
 
