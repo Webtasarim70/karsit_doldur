@@ -13,7 +13,7 @@ e-Karşıt tutanak PDF'sini ve mevcut arşiv dosyasını yükleyin; e-Karşıt s
 
 `index.html` dosyasını tarayıcıda açın (Chrome/Edge önerilir) veya GitHub Pages ile yayınlayın. Akış 9 adımdır; her adım "Onayla ve devam et" ile açılır:
 
-1. **e-Karşıt PDF** — tutanak okunur; fatura tarihlerinden dönemler belirlenir.
+1. **e-Karşıt PDF** — tutanak okunur; fatura tarihlerinden dönemler belirlenir. PDF, e-Karşıt’a yüklenmiş bir **cevap yazısı** ise 1-7. tablolardaki veriler de okunur ve sonraki adımlarda “Cevap yazısı” kaynağı olarak kullanılır.
 2. **Arşiv** (isteğe bağlı) — mevcut arşiv `.xlsx`; VKN uyuşmazsa devam edilemez.
 3. **KDV** — beyanname/tahakkuk PDF'leri (eski ve yeni biçim), daha önce hazırlanmış Excel veya elle.
 4. **Muhtasar** — çalışan sayısı.
