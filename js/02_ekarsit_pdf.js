@@ -28,7 +28,7 @@ r.inv=[];if(h3){const s=sec(h3,h4||hO),HW=/^(Faturanın|Tarihi|Serisi|Numarası|
 const sf=i=>Math.ceil(-i.k/1000),tps={};/* TOPLAM satırı her sayfada tekrarlanabilir: sayfa bazında, o sayfanın TOPLAM satırının altı atılır */
  s.filter(i=>/^TOPLAM/i.test(i.s.trim())).forEach(i=>{const p=sf(i);if(tps[p]==null||i.k>tps[p])tps[p]=i.k});
  const cand=s.filter(i=>!HW.test(i.s.trim())&&!/^TOPLAM/i.test(i.s.trim()));
-const hs=s.filter(i=>HW.test(i.s.trim())),by=(re)=>hs.filter(i=>re.test(i.s.trim())).sort((a,b)=>a.x-b.x);
+const hs0=s.filter(i=>HW.test(i.s.trim())),hp=hs0.length?sf(hs0[0]):0,hs=hs0.filter(i=>sf(i)===hp)/* başlık her sayfada tekrarlanır: yalnızca ilk başlık sayfası */,by=(re)=>hs.filter(i=>re.test(i.s.trim())).sort((a,b)=>a.x-b.x);
 const T=by(/^Tarihi$/),N=by(/^Numarası$/),g=(a,i,d)=>a[i]?ctr(a[i]):d;
 const C=[g(T,0,46),g(by(/^Serisi$/),0,93),g(N,0,146),g(by(/^Tutarı/),0,205),g(by(/^K\.D\.V/),0,262),g(T,1,321),g(N,1,377),g(by(/^Bilgiler$/),0,437),497,g(by(/^Hatalı/),0,552)],K=['tarih','seri','no','tutar','kdv','dk','yev','od','ack','hat'];
 const near=i=>C.reduce((a,v,j)=>Math.abs(v-ctr(i))<Math.abs(C[a]-ctr(i))?j:a,0);
