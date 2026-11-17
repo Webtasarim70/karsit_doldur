@@ -31,7 +31,8 @@ function parseCevap(items){
  if(!mk[1]||!mk[2]||!mk[4]||!mk[5]||it.filter(i=>/aşağıdaki gibidir/i.test(i.s)).length<3)return null;
  const bolum=n=>{const a=mk[n];if(!a)return[];const nx=Object.entries(mk).filter(([m])=>+m>n).map(([,v])=>v).filter(v=>v.k<a.k).sort((p,q)=>q.k-p.k)[0];
   return it.filter(i=>i.k<a.k-3&&(!nx||i.k>nx.k+3)&&!HDR.test(i.s.trim()))};
- const sonTop=(L)=>{const tp=L.find(i=>/^TOPLAM/i.test(i.s.trim()));return tp?L.filter(i=>i.k>tp.k+10):L};
+ const sonTop=(L)=>{const sf=i=>Math.ceil(-i.k/1000),tps={};L.filter(i=>/^TOPLAM/i.test(i.s.trim())).forEach(i=>{const p=sf(i);if(tps[p]==null||i.k>tps[p])tps[p]=i.k});const son=Math.max(0,...Object.keys(tps).map(Number));/* TOPLAM her sayfada tekrarlanabilir; son TOPLAM sayfasından sonraki sayfalar (dipnot vb.) alınmaz */
+ return L.filter(i=>(!son||sf(i)<=son)&&(tps[sf(i)]==null||i.k>tps[sf(i)]+10))};
  const uyari=[];
  const ortaklar=tablo(bolum(1),T1).filter(r=>r.ad||r.vkn);
  const defterler=tablo(bolum(2),T2).filter(r=>r.nevi).map(r=>({...r,bas:normDonem(r.bas),bit:normDonem(r.bit),tarih:normTarih(r.tarih)}));
@@ -40,6 +41,7 @@ function parseCevap(items){
  const b6=bolum(6),imalatciYok=b6.some(i=>/^İmalatçı değildir/i.test(i.s.trim()));
  const imalatcilar=imalatciYok?[]:tablo(b6,T6).filter(r=>r.ad||r.vkn||r.no).map(r=>({...r,tarih:normTarih(r.tarih)}));
  const tedarikciler=tablo(sonTop(bolum(7)),T7).filter(r=>r.no||r.vkn||r.ad).map(r=>({donem:'',ad:r.ad,vkn:r.vkn,vd:r.vd,tarih:normTarih(r.tarih),seri:r.seri,no:r.no,matrah:parseNum(r.matrah),kdv:parseNum(r.kdv),gumTarih:normTarih(r.gumTarih),gumNo:r.gumNo}));
+ if(!(ortaklar.length||defterler.length||isciler.length||kdv.length||imalatcilar.length||imalatciYok||tedarikciler.length))return null;/* tablolar boşsa bu, doldurulmamış e-Karşıt tutanağıdır */
  if(!ortaklar.length)uyari.push('1. tabloda (ortaklık) satır okunamadı.');
  if(!defterler.length)uyari.push('2. tabloda (yasal defterler) satır okunamadı.');
  if(!isciler.length)uyari.push('4. tabloda (çalışan sayısı) satır okunamadı.');
