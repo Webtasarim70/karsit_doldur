@@ -4,6 +4,7 @@
 *.xls
 *.pdf
 *.zip
+*.patch
 ARSIV_*
 yerel/
 ornek-veri/
