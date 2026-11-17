@@ -18,6 +18,7 @@
 - [x] Arayüz metinlerinde “Ç) mükellef” → “karşıt yapılan ilgili mükellef”
 - [x] "Uygulanamaz" durumu: tedarikçi (Adım 7) ve imalatçı (Adım 8)
 - [x] Fatura listesi birden fazla sayfaya bölündüğünde (TOPLAM her sayfada tekrarlanır) yalnızca ilk sayfa okunuyordu; sayfa bazında TOPLAM sınırıyla düzeltildi (OBAŞAK örneği: 31 fatura, toplam tutuyor)
+- [ ] 7. tablo “KDV Dahil Toplam Bedeli” biçimli cevap yazıları okunur ama 7. adıma aktarılmaz (matrah/KDV ayrımı yok); bu biçimin e-Karşıt Excel şablonu bekleniyor
 - [ ] **Cevap yazısı (dolu tutanak) desteği** (geliştirildi; kullanıcı testi bekliyor): Adım 1'de yüklenen PDF cevap yazısıysa 1-7. tablolar okunur (`js/16_cevap.js`); Adım 3-8'de “Cevap yazısı” kaynağı olarak görünür, Adım 9 eksikleri gösterir; veriler güncellenmiş arşive de yazılır; Adım 1'de seçenek sunulur: “bilgileri arşiv dosyası için kullan” (doğrudan Adım 9) veya “eksikleri tamamla” (adım adım akış)
 - [x] Cevap yazısı okuyucusu çok sayfalı/çok dönemli gerçek örnekle (OBAŞAK: 31 fatura, 13 defter, 7 KDV, 2 imalatçı, 60 tedarikçi) sınandı: KDV satırları sütun başlıklarından okunur, sarılan sayılar birleştirilir, ad hücreleri satır aralığından bölünür; fatura listesinde başlığın sayfalarda tekrarı düzeltildi
 

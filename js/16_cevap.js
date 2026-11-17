@@ -5,7 +5,7 @@
 (function(g){
 const K=typeof module!=='undefined'?require('./01_ortak.js'):g.KD;
 const {parseNum,normTarih,normDonem,donemOfTarih}=K;
-const HDR=/^(Adı Soyadı \/?|Ünvanı|Vergi\/T\.C\. Kimlik|Vergi\/T\.C\.|Kimlik|Numarası|Bağlı Olduğu İl|Bağlı Olduğu Vergi Dairesi|Bağlı Olduğu|Vergi Dairesi|Pay Oranı|Açıklama|Defterin Nev'i|Başlangıç|Bitiş|Tasdik|Tasdik Numarası \/|Tasdik Tarihi|Defter Türü|Dönemi|Makamı|Berat Numarası|Dönem|Çalışan İşçi Sayısı|Beyannamenin Verildiği Vergi Dairesi|Teslim ve|Hizmet|Karşılığını|Teşkil Eden|Bedel|Özel Matrah|Şekline Tabi|İşl\. Matr\. Dahil|Olm\. Bedel|KDV|Matrahı|Hesaplanan|İlave|Edilecek|Toplam|İndirimler|Toplamı|Ödenmesi|Gereken|Sonraki|Döneme|Devreden|Tahakkuk|Fişinin|Önceki Dönem ve İlgili Dönem KDV Beyan Bilgileri|Bağlı Bulunduğu|Sanayi Odası|Belge Tarihi|Belge Numarası|Belge Türü|Faturanın|Tarihi|Serisi|Faturanın Matrahı|Faturanın KDV Tutarı|Gümrük|Beyannamesi\/|Serbest Bölge|İşlem Formu|Tescil)$/;
+const HDR=/^(Adı Soyadı \/?|Ünvanı|Vergi\/T\.C\. Kimlik|Vergi\/T\.C\.|Kimlik|Numarası|Bağlı Olduğu İl|Bağlı Olduğu Vergi Dairesi|Bağlı Olduğu|Vergi Dairesi|Pay Oranı|Açıklama|Defterin Nev'i|Başlangıç|Bitiş|Tasdik|Tasdik Numarası \/|Tasdik Tarihi|Defter Türü|Dönemi|Makamı|Berat Numarası|Dönem|Çalışan İşçi Sayısı|Beyannamenin Verildiği Vergi Dairesi|Teslim ve|Hizmet|Karşılığını|Teşkil Eden|Bedel|Özel Matrah|Şekline Tabi|İşl\. Matr\. Dahil|Olm\. Bedel|KDV|Matrahı|Hesaplanan|İlave|Edilecek|Toplam|İndirimler|Toplamı|Ödenmesi|Gereken|Sonraki|Döneme|Devreden|Tahakkuk|Fişinin|Önceki Dönem ve İlgili Dönem KDV Beyan Bilgileri|Bağlı Bulunduğu|Sanayi Odası|Belge Tarihi|Belge Numarası|Belge Türü|Faturanın|Tarihi|Serisi|Faturanın Matrahı|Faturanın KDV Tutarı|KDV Dahil Toplam Bedeli|Gümrük|Beyannamesi\/|Serbest Bölge|İşlem Formu|Tescil)$/;
 /* Tablo tanımları: kolonlar [anahtar, merkez-x, birleştirme('' = bitişik: kimlik/sayı/tarih, ' ' = metin)], ilk sütun için x sınırı */
 const T1={cols:[['ad',62,' '],['vkn',149,''],['il',245,' '],['vd',347,' '],['pay',446,''],['aciklama',531,' ']],first:110,anchor:['vkn',/^\d{10,11}$/]};
 const T2={cols:[['nevi',56,' '],['bas',124,''],['bit',180,''],['makam',235,' '],['tarih',298,''],['no',377,''],['aciklama',460,' '],['tur',540,' ']],first:100,anchor:['bas',/^\d{2}\.\d{4}$/]};
@@ -13,6 +13,8 @@ const T4={cols:[['donem',70,''],['sayi',178,''],['vd',350,' ']],anchor:['donem',
 const T5={cols:[['donem',42,''],['teslim',90,''],['ozel',151,''],['matrah',202,''],['hesap',253,''],['ilave',309,''],['toplam',361,''],['indirim',412,''],['odenecek',464,''],['devreden',515,''],['tahakkuk',561,'']],anchor:['donem',/^\d{2}\.\d{4}$/],split:true,hdr:[/^Dönem$/,/^Karşılığını$/,/^Şekline$/,/^Matrahı$/,/^Hesaplanan$/,/^İlave Edilecek$/,/^Toplam KDV$/,/^İndirimler$/,/^Ödenmesi$/,/^Döneme$/,/^Tahakkuk$/]};
 const T6={cols:[['ad',62,' '],['vkn',131,''],['oda',206,' '],['tarih',284,''],['no',360,''],['tur',442,' '],['aciklama',530,' ']],first:100,anchor:['vkn',/^\d{10,11}$/]};
 const T7={cols:[['ad',48,' '],['vkn',98,''],['vd',150,' '],['tarih',199,''],['seri',240,''],['no',284,''],['matrah',349,''],['kdv',431,''],['gumTarih',501,''],['gumNo',557,'']],first:75,anchor:['tarih',/^\d{2}\.\d{2}\.\d{4}$/]};
+/* 7. tablonun "KDV Dahil Toplam Bedeli" biçimi (matrah/KDV/gümrük sütunları yok) */
+const T7b={cols:[['ad',54,' '],['vkn',132,''],['vd',216,' '],['tarih',290,''],['seri',355,''],['no',418,''],['toplam',513,'']],first:100,anchor:['tarih',/^\d{2}\.\d{2}\.\d{4}$/]};
 const DON=/^\d{2}\.\d{4}$/;
 /* Birleşik öğeleri ("12.2025 34.189.686,78 1.902.2") sözcüklere böler; x konumu karakter oranından kestirilir. */
 const bol=i=>{const t=i.s.trim();if(!/\s/.test(t))return[i];const L=i.s.length,out=[];let m;const re=/\S+/g;while((m=re.exec(i.s)))out.push({...i,s:m[0],x:i.x+(m.index+m[0].length/2)/L*i.w,w:0});return out};
@@ -24,15 +26,16 @@ function tablo(items,T,cent){
  const cols=T.cols.map((c,j)=>[c[0],cent&&cent[j]!=null?cent[j]:c[1],c[2]]),its=T.split?items.flatMap(bol):items;
  const ctr=i=>i.x+i.w/2,col=i=>T.first&&i.x<T.first?0:cols.reduce((a,v,j)=>Math.abs(v[1]-ctr(i))<Math.abs(cols[a][1]-ctr(i))?j:a,T.first?1:0),pg=i=>Math.ceil(-i.k/1000);
  const aj=cols.findIndex(c=>c[0]===T.anchor[0]),an=[...new Set(its.filter(i=>T.anchor[1].test(i.s.trim())&&col(i)===aj).map(i=>i.k))].sort((a,b)=>b-a);
+ if(!an.length)return[];/* çapa bulunamadı: bu yerleşimde satır kurulamaz */
  const rows=an.map(k=>({k,c:cols.map(()=>[])})),CAP=45,sahip=new Map();
  const sayfalar=[...new Set(its.map(pg))].sort((a,b)=>a-b);
  /* İlk sütun (ad/ünvan) çok satıra sarılır: ardışık satırlar bir blok sayılır, blok kendi aralığındaki çapanın satırına gider; çapası olmayan sayfa başı bloğu önceki sayfadaki satırın devamıdır. */
  if(T.first){const c0=its.filter(i=>col(i)===0).sort((a,b)=>b.k-a.k),bl=[],ls=[];
   c0.forEach(i=>{const l=ls[ls.length-1];if(l&&pg(l[0])===pg(i)&&l[0].k-i.k<=3)l.push(i);else ls.push([i])});
   /* aynı hücredeki satırlar eşit aralıklıdır (örn. 8,15); satır sınırlarında aralık farklıdır → ortak satır aralığı (en sık değer) dışındaki boşluklar blok sınırıdır */
-  const gp=[];ls.forEach((l,q)=>{if(q&&pg(ls[q-1][0])===pg(l[0])){const g=ls[q-1][0].k-l[0].k;if(g<12)gp.push(Math.round(g*10)/10)}});
-  const fr={};gp.forEach(v=>fr[v]=(fr[v]||0)+1);const mod=Object.entries(fr).sort((a,b)=>b[1]-a[1])[0],lp=mod&&mod[1]>=3?+mod[0]:null;
-  let cur=[];ls.forEach((l,q)=>{if(q){const g=ls[q-1][0].k-l[0].k,yeni=pg(ls[q-1][0])!==pg(l[0])||g>12||(lp!=null&&Math.abs(g-lp)>0.3);if(yeni){bl.push(cur);cur=[]}}cur.push(...l)});if(cur.length)bl.push(cur);
+  const gp=[];ls.forEach((l,q)=>{if(q&&pg(ls[q-1][0])===pg(l[0])){const g=ls[q-1][0].k-l[0].k;if(g<12)gp.push(g)}});
+  gp.sort((a,b)=>a-b);const lp=gp.length>=3?gp[Math.floor(gp.length/2)]:null;/* ortanca satır aralığı */
+  let cur=[];ls.forEach((l,q)=>{if(q){const g=ls[q-1][0].k-l[0].k,yeni=pg(ls[q-1][0])!==pg(l[0])||g>12||(lp!=null&&Math.abs(g-lp)>0.15);if(yeni){bl.push(cur);cur=[]}}cur.push(...l)});if(cur.length)bl.push(cur);
   bl.forEach((b,bi)=>{const hi=b[0].k,lo=b[b.length-1].k,p=pg(b[0]);let r=an.findIndex(k=>k<=hi+6&&k>=lo-6);
    const ai=an.map((k,x)=>({k,x})).filter(a=>a.k<=hi+6&&a.k>=lo-6);
    if(ai.length>=2){/* satırlar arası boşluk yoksa birden çok satırın adı tek blok olur: satırları, her grubun ortası kendi çapasına denk gelecek biçimde ardışık gruplara böl (DP) */
@@ -68,14 +71,18 @@ function parseCevap(items){
  const kdv=tablo(bolum(5),T5,merkezler(bolumH(5),T5)).filter(r=>DON.test(r.donem)).map(r=>({donem:normDonem(r.donem),teslim:parseNum(r.teslim),ozel:parseNum(r.ozel),matrah:parseNum(r.matrah),hesap:parseNum(r.hesap),ilave:parseNum(r.ilave),toplam:parseNum(r.toplam),indirim:parseNum(r.indirim),odenecek:parseNum(r.odenecek),devreden:parseNum(r.devreden),tahakkuk:r.tahakkuk}));
  const b6=bolum(6),imalatciYok=b6.some(i=>/^İmalatçı değildir/i.test(i.s.trim()));
  const imalatcilar=imalatciYok?[]:tablo(b6,T6).filter(r=>r.ad||r.vkn||r.no).map(r=>({...r,tarih:normTarih(r.tarih)}));
- const tedarikciler=tablo(sonTop(bolum(7)),T7).filter(r=>r.no||r.vkn||r.ad).map(r=>({donem:'',ad:r.ad,vkn:r.vkn,vd:r.vd,tarih:normTarih(r.tarih),seri:r.seri,no:r.no,matrah:parseNum(r.matrah),kdv:parseNum(r.kdv),gumTarih:normTarih(r.gumTarih),gumNo:r.gumNo}));
- if(!(ortaklar.length||defterler.length||isciler.length||kdv.length||imalatcilar.length||imalatciYok||tedarikciler.length))return null;/* tablolar boşsa bu, doldurulmamış e-Karşıt tutanağıdır */
+ const b7=bolumH(7),kdvDahil=b7.some(i=>/^KDV Dahil Toplam Bedeli$/i.test(i.s.trim()));
+ let tedarikciler,tedarikKdvDahil=null;
+ if(kdvDahil){const L=tablo(sonTop(bolum(7)),T7b).filter(r=>r.no||r.vkn||r.ad);tedarikKdvDahil=L.map(r=>({ad:r.ad,vkn:r.vkn,vd:r.vd,tarih:normTarih(r.tarih),seri:r.seri,no:r.no,toplam:parseNum(r.toplam)}));tedarikciler=[];
+  uyari.push(`7. tablo “KDV Dahil Toplam Bedeli” biçiminde (${L.length} satır okundu); matrah ve KDV ayrımı olmadığı için bu satırlar 7. adıma aktarılmadı. Bu biçim için e-Karşıt Excel şablonu gerekir.`)}
+ else tedarikciler=tablo(sonTop(bolum(7)),T7).filter(r=>r.no||r.vkn||r.ad).map(r=>({donem:'',ad:r.ad,vkn:r.vkn,vd:r.vd,tarih:normTarih(r.tarih),seri:r.seri,no:r.no,matrah:parseNum(r.matrah),kdv:parseNum(r.kdv),gumTarih:normTarih(r.gumTarih),gumNo:r.gumNo}));
+ if(!(ortaklar.length||defterler.length||isciler.length||kdv.length||imalatcilar.length||imalatciYok||tedarikciler.length||(tedarikKdvDahil&&tedarikKdvDahil.length)))return null;/* tablolar boşsa bu, doldurulmamış e-Karşıt tutanağıdır */
  if(!ortaklar.length)uyari.push('1. tabloda (ortaklık) satır okunamadı.');
  if(!defterler.length)uyari.push('2. tabloda (yasal defterler) satır okunamadı.');
  if(!isciler.length)uyari.push('4. tabloda (çalışan sayısı) satır okunamadı.');
  if(!kdv.length)uyari.push('5. tabloda (KDV) satır okunamadı.');
- if(!tedarikciler.length)uyari.push('7. tabloda (tedarikçi) satır okunamadı.');
- return{ortaklar,defterler,isciler,kdv,imalatcilar,imalatciYok,tedarikciler,uyari}}
+ if(!tedarikciler.length&&!kdvDahil)uyari.push('7. tabloda (tedarikçi) satır okunamadı.');
+ return{ortaklar,defterler,isciler,kdv,imalatcilar,imalatciYok,tedarikciler,tedarikKdvDahil,uyari}}
 /* Tedarikçi satırlarına dönem atar: tek fatura dönemi varsa hepsi o döneme; çoksa fatura tarihinin dönemi (dönemlerden biriyse), değilse boş bırakılır. */
 function cevapDonemAta(c,D){const uy=[...c.uyari];
  const t=c.tedarikciler.map(r=>{let d=D.length===1?D[0]:donemOfTarih(r.tarih);if(!D.includes(d)){uy.push(`Tedarikçi faturası ${r.no||r.ad}: dönemi belirlenemedi (fatura tarihi ${r.tarih||'—'}); bu satır kullanılmayacak.`);d=''}return{...r,donem:d}}).filter(r=>r.donem);
